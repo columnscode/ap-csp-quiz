@@ -1,0 +1,19 @@
+{
+  "name": "AP CSP Study Drop",
+  "short_name": "Study Drop",
+  "description": "AP Computer Science Principles exam-prep quiz.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#050216",
+  "theme_color": "#0d0628",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,1086 @@
+{
+  "_README": [
+    "================================================================",
+    "AP CSP QUIZ — QUESTION BANK (source of truth)",
+    "================================================================",
+    "",
+    "This file holds every question used by the AP CSP Quiz app.",
+    "JSON has no native comment syntax, so we use keys starting with",
+    "an underscore ('_README', '_doc', '_note', etc.) for documentation.",
+    "These keys are IGNORED by the app at runtime — they're for humans",
+    "and for Claude when extending the bank.",
+    "",
+    "HOW TO EXTEND THIS FILE:",
+    "  1) Open this file with Claude.ai and say something like:",
+    "       'Add 10 more multiple_choice questions to the procedures",
+    "        topic, following the schema in _typeGuide.'",
+    "  2) Claude reads _typeGuide and the existing questions to learn",
+    "     the format, then appends new ones to the 'questions' array.",
+    "  3) When you're ready to update the app, paste the new",
+    "     'questions' array into the QUESTIONS constant at the top",
+    "     of app.jsx (or ask Claude to do it).",
+    "",
+    "QUESTION TYPES (see _typeGuide below for full schemas):",
+    "  multiple_choice  — classic A/B/C/D",
+    "  trace            — animated step-through with live variables",
+    "  binary           — toggle 8 bits to match a target decimal",
+    "  bug_hunt         — click the buggy line, then identify the bug",
+    "  boolean          — rapid TRUE / FALSE evaluation",
+    "  build_loop       — reorder scrambled pseudocode blocks",
+    "",
+    "TOPICS (used for grouping and per-topic scoring):",
+    "  procedures, iteration, data, efficiency, debugging,",
+    "  boolean, binary, media, internet, security, impact",
+    "",
+    "AP PSEUDOCODE CONVENTIONS USED THROUGHOUT:",
+    "  * Lists are 1-INDEXED:  aList[1] is the FIRST element",
+    "  * <- (or ←) means assignment;  =  means equality test",
+    "  * MOD is modulo;  LENGTH(list)  gives list size",
+    "  * APPEND(list, value), INSERT(list, i, value), REMOVE(list, i)",
+    "  * RANDOM(a, b) returns a random integer from a to b inclusive",
+    "  * Procedures: PROCEDURE name(params) { ... RETURN(value) }",
+    "  * Loops: REPEAT n TIMES { },  REPEAT UNTIL (cond) { },",
+    "           FOR EACH item IN list { }",
+    "================================================================"
+  ],
+
+  "_meta": {
+    "version": "1.0",
+    "_doc_topics": "Each topic maps to its full name, short label, and study reference. The app reads these for rendering. Don't change keys without updating app.jsx.",
+    "topics": {
+      "procedures": { "name": "Procedures & Returns", "short": "PROC", "study": "Barron's Ch 4 · Hare: Programming unit (functions)" },
+      "iteration":  { "name": "Loops & Lists",        "short": "LOOP", "study": "Barron's Ch 4 · Hare: Programming unit (loops/lists)" },
+      "data":       { "name": "Data Abstraction",     "short": "DATA", "study": "Barron's Ch 3 · Hare: Programming unit (lists)" },
+      "efficiency": { "name": "Algorithm Efficiency", "short": "EFF",  "study": "Barron's Ch 4 · efficiency, search, heuristics" },
+      "debugging":  { "name": "Debugging",            "short": "BUG",  "study": "Barron's Ch 1 & 2 · iterative development" },
+      "boolean":    { "name": "Boolean Logic",        "short": "BOOL", "study": "Barron's Ch 4 · Hare: Boolean Expressions" },
+      "binary":     { "name": "Binary & Numbers",     "short": "BIN",  "study": "Barron's Ch 3 · Hare: Number Systems" },
+      "media":      { "name": "Pixels & Compression", "short": "MED",  "study": "Barron's Ch 3 · Hare: Pixels & Compressing Data" },
+      "internet":   { "name": "Internet & Networks",  "short": "NET",  "study": "Barron's Ch 5 · Hare: The Internet" },
+      "security":   { "name": "Encryption",           "short": "SEC",  "study": "Barron's Ch 5 · Hare: Protecting Data" },
+      "impact":     { "name": "Impact of Computing",  "short": "IMP",  "study": "Barron's Ch 6 · Hare: Impact of Computing" }
+    }
+  },
+
+  "_typeGuide": {
+    "_doc": "Schema reference for every question type. When adding questions, follow the schema exactly. Required fields are marked. Optional fields can be omitted.",
+
+    "multiple_choice": {
+      "_when_to_use": "Default workhorse. Use for any conceptual question or short code-trace question with one correct answer out of four.",
+      "_schema": {
+        "type": "multiple_choice  (REQUIRED, literal string)",
+        "topic": "string (REQUIRED, one of the topic keys in _meta.topics)",
+        "question": "string (REQUIRED, the question prompt; may include \\n for line breaks)",
+        "code": "string (OPTIONAL, rendered as a separate code block under the question)",
+        "options": "array of EXACTLY 4 strings (REQUIRED)",
+        "answer": "number 0–3 (REQUIRED, index into options)",
+        "explanation": "string (REQUIRED, shown after they answer)"
+      },
+      "_example": {
+        "type": "multiple_choice",
+        "topic": "procedures",
+        "question": "What is returned by mystery(mystery(3))?",
+        "code": "PROCEDURE mystery(x) { RETURN(x * 2 + 1) }",
+        "options": ["7", "13", "15", "19"],
+        "answer": 2,
+        "explanation": "Inner first: mystery(3) = 3*2+1 = 7. Then mystery(7) = 15."
+      }
+    },
+
+    "trace": {
+      "_when_to_use": "Use when the value of intermediate variables matters for understanding. Student steps through line-by-line, watches variables update, then answers a final-state question. Best for nested loops, swaps, accumulators.",
+      "_schema": {
+        "type": "trace  (REQUIRED)",
+        "topic": "string (REQUIRED)",
+        "title": "string (REQUIRED, short label e.g. 'Trace the swap')",
+        "code": "array of strings (REQUIRED, one per line; preserve indentation with leading spaces)",
+        "steps": "array of step objects (REQUIRED, in execution order). Each step is { 'line': N, 'vars': { name: value, ... } } where 'line' is 0-indexed and 'vars' is the COMPLETE variable state at that moment (including unchanged vars). Lists/arrays should be passed as their string form, e.g. '[3, 5]'.",
+        "question": "string (REQUIRED, asked after stepping through)",
+        "options": "array of EXACTLY 4 strings (REQUIRED)",
+        "answer": "number 0–3 (REQUIRED)",
+        "explanation": "string (REQUIRED)"
+      },
+      "_authoring_tips": [
+        "Keep traces under 15 steps — students lose focus past that.",
+        "Render lists/arrays as strings like '[3, 5]' to keep JSON simple.",
+        "Show variables on the step they FIRST appear, then keep showing them every subsequent step.",
+        "For procedure return values, use synthetic var names like 'f(4)' to expose the return."
+      ],
+      "_example": {
+        "type": "trace",
+        "topic": "iteration",
+        "title": "Trace the loop",
+        "code": ["x ← 0", "FOR EACH n IN [3, 5, 7] {", "  x ← x + n", "}", "DISPLAY(x)"],
+        "steps": [
+          { "line": 0, "vars": { "x": 0 } },
+          { "line": 1, "vars": { "x": 0, "n": 3 } },
+          { "line": 2, "vars": { "x": 3, "n": 3 } }
+        ],
+        "question": "What value is displayed?",
+        "options": ["3", "12", "15", "21"],
+        "answer": 2,
+        "explanation": "FOR EACH adds 3, then 5, then 7 → 15."
+      }
+    },
+
+    "binary": {
+      "_when_to_use": "ONLY for the binary topic. Student sees 8 toggleable bit-switches with place values (128,64,32,16,8,4,2,1) and flips them to match a target. Live decimal counter shows current value as they toggle.",
+      "_schema": {
+        "type": "binary  (REQUIRED)",
+        "topic": "string (REQUIRED, almost always 'binary')",
+        "target": "number (REQUIRED, integer 0–255)",
+        "explanation": "string (REQUIRED, shown after match; show breakdown like '173 = 128+32+8+4+1 = 10101101')"
+      },
+      "_authoring_tips": [
+        "Mix easy targets (under 32, 1-2 bits) with hard ones (over 100, multiple bits).",
+        "Avoid 0 and 255 (too trivial / too obvious).",
+        "Vary bit patterns — don't make them all rounded numbers."
+      ],
+      "_example": {
+        "type": "binary",
+        "topic": "binary",
+        "target": 173,
+        "explanation": "173 = 128 + 32 + 8 + 4 + 1, so the bit pattern is 10101101."
+      }
+    },
+
+    "bug_hunt": {
+      "_when_to_use": "Best for debugging topic. Student first clicks the buggy line in a code snippet, then identifies what KIND of bug it is from 4 options. Awards extra credit for getting both right.",
+      "_schema": {
+        "type": "bug_hunt  (REQUIRED)",
+        "topic": "string (REQUIRED, almost always 'debugging')",
+        "code": "array of strings (REQUIRED, one per line; use leading spaces for indentation)",
+        "buggyLine": "number (REQUIRED, 0-indexed line number)",
+        "options": "array of EXACTLY 4 strings (REQUIRED, descriptions of the bug type)",
+        "answer": "number 0–3 (REQUIRED, index of correct bug-type description)",
+        "explanation": "string (REQUIRED)"
+      },
+      "_authoring_tips": [
+        "Mix bug types: infinite loops, off-by-one, dead code, missing return, wrong operator, wrong scope.",
+        "Make wrong options PLAUSIBLE — vague distractors aren't educational.",
+        "Keep code 5-8 lines so the student can scan quickly."
+      ],
+      "_example": {
+        "type": "bug_hunt",
+        "topic": "debugging",
+        "code": ["i ← 0", "REPEAT UNTIL (i = 10) {", "  DISPLAY(i)", "  i ← i + 3", "}"],
+        "buggyLine": 1,
+        "options": ["Off-by-one", "Infinite loop — i jumps over 10", "Dead code", "Wrong direction"],
+        "answer": 1,
+        "explanation": "i goes 0,3,6,9,12... never hits exactly 10. Use i ≥ 10 instead."
+      }
+    },
+
+    "boolean": {
+      "_when_to_use": "Rapid-fire TRUE/FALSE evaluation. Student sees an expression with literal true/false values and operators (AND, OR, NOT) and picks one of two huge buttons. Best for the boolean topic.",
+      "_schema": {
+        "type": "boolean  (REQUIRED)",
+        "topic": "string (REQUIRED, almost always 'boolean')",
+        "expression": "string (REQUIRED, the expression e.g. 'NOT(true AND false)')",
+        "answer": "string 'true' or 'false' (REQUIRED)",
+        "explanation": "string (REQUIRED)"
+      },
+      "_authoring_tips": [
+        "Keep expressions visually short (under ~30 chars).",
+        "Mix difficulties: simple → nested → with multiple operators.",
+        "Vary parens to test order-of-operations.",
+        "Don't use VARIABLE names — only literal true/false. (For variable-based reasoning, use multiple_choice.)"
+      ],
+      "_example": {
+        "type": "boolean",
+        "topic": "boolean",
+        "expression": "NOT(true AND false)",
+        "answer": "true",
+        "explanation": "Inside first: true AND false = false. NOT(false) = true."
+      }
+    },
+
+    "build_loop": {
+      "_when_to_use": "Student is given pseudocode blocks scrambled and must rearrange them. Great for teaching the SHAPE of common patterns (sum, max, filter, count). Best for iteration and procedures topics.",
+      "_schema": {
+        "type": "build_loop  (REQUIRED)",
+        "topic": "string (REQUIRED)",
+        "title": "string (REQUIRED, e.g. 'Sum a list')",
+        "description": "string (REQUIRED, what the assembled program should do)",
+        "blocks": "array of strings (REQUIRED, the LINES OF CODE in their CORRECT ORDER. The app shuffles them on display. Preserve indentation with leading spaces.)",
+        "explanation": "string (REQUIRED)"
+      },
+      "_authoring_tips": [
+        "5–8 blocks is the sweet spot.",
+        "Closing braces } get their own line — students should learn placement.",
+        "Each block should be a logically complete line.",
+        "If two orderings would both work, that's a flaw — make sure there's exactly one correct order."
+      ],
+      "_example": {
+        "type": "build_loop",
+        "topic": "iteration",
+        "title": "Sum a list",
+        "description": "Order these blocks to correctly sum the values in nums.",
+        "blocks": ["total ← 0", "FOR EACH n IN nums {", "  total ← total + n", "}", "DISPLAY(total)"],
+        "explanation": "Standard accumulator pattern: initialize, loop and update, then display."
+      }
+    }
+  },
+
+  "_topicWeighting_doc": "The current bank intentionally over-weights topics where the student showed weakness in his Minesweeper code (procedures, iteration, data, efficiency, debugging). Approximate distribution: procedures ~15, iteration ~15, data ~12, efficiency ~12, debugging ~12, boolean ~12, binary ~12 (incl. bit-flip), media ~8, internet ~10, security ~8, impact ~8. Adjust as you add questions.",
+
+  "questions": [
+
+    { "_section": "===== PROCEDURES =====" },
+    {
+      "type": "multiple_choice", "topic": "procedures",
+      "question": "What is returned by max(7, 3)?",
+      "code": "PROCEDURE max(a, b) {\n  IF (a > b) { RETURN(a) }\n  ELSE       { RETURN(b) }\n}",
+      "options": ["3", "7", "10", "Nothing"], "answer": 1,
+      "explanation": "7 > 3 is true, so the IF branch runs and returns a, which is 7."
+    },
+    {
+      "type": "multiple_choice", "topic": "procedures",
+      "question": "What is the main reason to use procedures?",
+      "options": ["They make programs faster", "They let you reuse code and update logic in one place", "They store data more compactly in memory", "They prevent all bugs"],
+      "answer": 1,
+      "explanation": "Procedural abstraction: wrap reusable logic in a named procedure. Fix once, fixed everywhere."
+    },
+    {
+      "type": "multiple_choice", "topic": "procedures",
+      "question": "Which best describes a parameter?",
+      "options": ["A value a procedure returns", "A variable that holds a value passed in by the caller", "A global variable", "The procedure's name"],
+      "answer": 1,
+      "explanation": "In PROCEDURE greet(name), 'name' is a parameter. greet(\"Sam\") passes \"Sam\" into name."
+    },
+    {
+      "type": "multiple_choice", "topic": "procedures",
+      "question": "What does mystery(mystery(3)) return?",
+      "code": "PROCEDURE mystery(x) { RETURN(x * 2 + 1) }",
+      "options": ["7", "13", "15", "19"], "answer": 2,
+      "explanation": "Inner first: mystery(3) = 3*2+1 = 7. Then mystery(7) = 7*2+1 = 15."
+    },
+    {
+      "type": "multiple_choice", "topic": "procedures",
+      "question": "A procedure always draws a red square at (100, 100). To make it more reusable:",
+      "options": ["Add a return value", "Add parameters for position and color", "Move it to a different file", "Rename it"],
+      "answer": 1,
+      "explanation": "Parameters generalize a procedure. drawSquare(x, y, color) draws any square anywhere."
+    },
+    {
+      "type": "multiple_choice", "topic": "procedures",
+      "question": "Why is RETURN useful?",
+      "options": ["So the procedure can be called more than once", "So the result can be used in further computation", "So it runs faster", "So it can have parameters"],
+      "answer": 1,
+      "explanation": "Return values let you plug a procedure into expressions: total ← price + tax(price)."
+    },
+    {
+      "type": "multiple_choice", "topic": "procedures",
+      "question": "What is the value of sum?",
+      "code": "PROCEDURE addThree(a, b, c) { RETURN(a + b + c) }\nsum ← addThree(2, addThree(1, 1, 1), 4)",
+      "options": ["6", "9", "12", "15"], "answer": 1,
+      "explanation": "Inner addThree(1,1,1) = 3. Outer = addThree(2, 3, 4) = 9."
+    },
+    {
+      "type": "multiple_choice", "topic": "procedures",
+      "question": "Which design for an average procedure is best?",
+      "options": ["No params, modifies a global", "PROCEDURE average(nums) — takes list, returns average", "No params, displays answer, returns nothing", "Caller pre-computes the sum"],
+      "answer": 1,
+      "explanation": "Inputs as parameters, output as return value, no hidden side effects. Cleanest design."
+    },
+    {
+      "type": "multiple_choice", "topic": "procedures",
+      "question": "What is a 'side effect' of a procedure?",
+      "options": ["The return value", "Anything besides returning a value (modifying a global, drawing, displaying)", "An error", "The number of parameters"],
+      "answer": 1,
+      "explanation": "Side effects = observable changes outside the return value. Pure-return procedures are easiest to test."
+    },
+    {
+      "type": "multiple_choice", "topic": "procedures",
+      "question": "What does g(4) return?",
+      "code": "PROCEDURE f(x) { RETURN(x + 1) }\nPROCEDURE g(x) { RETURN(f(x) * 2) }",
+      "options": ["8", "9", "10", "12"], "answer": 2,
+      "explanation": "f(4) = 5. Then 5 * 2 = 10. Procedures can call other procedures."
+    },
+    {
+      "type": "multiple_choice", "topic": "procedures",
+      "question": "Which body for isEven(n) is correct?",
+      "options": ["IF (n MOD 2 = 0) { RETURN(true) } ELSE { RETURN(false) }", "RETURN(n MOD 2 = 1)", "RETURN(n MOD 2)", "RETURN(n + 2)"],
+      "answer": 0,
+      "explanation": "n MOD 2 gives the remainder. If 0, n is even. Option B returns true for ODD numbers (wrong polarity); option C returns 0 or 1 instead of true/false."
+    },
+    {
+      "type": "multiple_choice", "topic": "procedures",
+      "question": "Beyond reuse, why is a well-named procedure like isPrime(n) easier to TEST than the same logic inlined inside main?",
+      "options": ["The procedure runs in a separate program", "You can call it directly with chosen inputs (5, 7, 9, 100) and check the return, without running the rest of main", "Procedures cannot have bugs", "The compiler tests it for you"],
+      "answer": 1,
+      "explanation": "Procedures isolate logic so you can test it on its own — call with edge cases, check the return. Inlined code can only be exercised by running the whole program around it."
+    },
+    {
+      "type": "multiple_choice", "topic": "procedures",
+      "question": "What does h(h(10, 4), 3) return?",
+      "code": "PROCEDURE h(a, b) { RETURN(a - b) }",
+      "options": ["3", "6", "13", "17"], "answer": 0,
+      "explanation": "Inner h(10,4) = 6. Outer h(6,3) = 3."
+    },
+    {
+      "type": "multiple_choice", "topic": "procedures",
+      "question": "What's wrong with this procedure?",
+      "code": "PROCEDURE bad(x) {\n  y ← x * 2\n}",
+      "options": ["Nothing", "Invalid variable name", "It computes a value but never RETURNs it", "Too many parameters"],
+      "answer": 2,
+      "explanation": "y is calculated then discarded. Without RETURN(y), the caller gets nothing."
+    },
+    {
+      "type": "build_loop", "topic": "procedures",
+      "title": "Build a procedure",
+      "description": "Order these blocks to define a procedure 'square' that returns x², then call it on 5.",
+      "blocks": ["PROCEDURE square(x) {", "  RETURN(x * x)", "}", "result ← square(5)", "DISPLAY(result)"],
+      "explanation": "Define first, then call. RETURN sends the value back to the caller."
+    },
+
+    { "_section": "===== ITERATION =====" },
+    {
+      "type": "multiple_choice", "topic": "iteration",
+      "question": "What is displayed?",
+      "code": "nums ← [4, 7, 2, 9, 5]\ntotal ← 0\nFOR EACH n IN nums { total ← total + n }\nDISPLAY(total)",
+      "options": ["5", "9", "27", "47"], "answer": 2,
+      "explanation": "FOR EACH visits every item. 4+7+2+9+5 = 27."
+    },
+    {
+      "type": "multiple_choice", "topic": "iteration",
+      "question": "AP pseudocode lists are 1-indexed. Value of aList[3]?",
+      "code": "aList ← [10, 20, 30, 40, 50]",
+      "options": ["10", "20", "30", "40"], "answer": 2,
+      "explanation": "AP lists start at 1, NOT 0. aList[1]=10, aList[2]=20, aList[3]=30."
+    },
+    {
+      "type": "multiple_choice", "topic": "iteration",
+      "question": "Value of count?",
+      "code": "words ← [\"cat\", \"bat\", \"cat\", \"rat\", \"cat\"]\ncount ← 0\nFOR EACH w IN words {\n  IF (w = \"cat\") { count ← count + 1 }\n}",
+      "options": ["0", "3", "5", "15"], "answer": 1,
+      "explanation": "Three of five words are 'cat'."
+    },
+    {
+      "type": "multiple_choice", "topic": "iteration",
+      "question": "What displays?",
+      "code": "i ← 1\nREPEAT 4 TIMES {\n  DISPLAY(i)\n  i ← i + 1\n}",
+      "options": ["1 2 3", "1 2 3 4", "0 1 2 3 4", "4"], "answer": 1,
+      "explanation": "Loops 4 times. i starts at 1, displayed before each increment: 1, 2, 3, 4."
+    },
+    {
+      "type": "trace", "topic": "iteration",
+      "title": "Trace the accumulator",
+      "code": ["x ← 0", "FOR EACH n IN [3, 5, 7] {", "  x ← x + n", "}", "DISPLAY(x)"],
+      "steps": [
+        { "line": 0, "vars": { "x": 0 } },
+        { "line": 1, "vars": { "x": 0, "n": 3 } },
+        { "line": 2, "vars": { "x": 3, "n": 3 } },
+        { "line": 1, "vars": { "x": 3, "n": 5 } },
+        { "line": 2, "vars": { "x": 8, "n": 5 } },
+        { "line": 1, "vars": { "x": 8, "n": 7 } },
+        { "line": 2, "vars": { "x": 15, "n": 7 } },
+        { "line": 4, "vars": { "x": 15 } }
+      ],
+      "question": "What value is displayed?",
+      "options": ["3", "12", "15", "21"], "answer": 2,
+      "explanation": "FOR EACH adds 3, then 5, then 7 → 15."
+    },
+    {
+      "type": "trace", "topic": "iteration",
+      "title": "Trace the filter",
+      "code": ["result ← []", "FOR EACH n IN [1, 2, 3, 4, 5] {", "  IF (n > 2) {", "    APPEND(result, n)", "  }", "}", "DISPLAY(LENGTH(result))"],
+      "steps": [
+        { "line": 0, "vars": { "result": "[]" } },
+        { "line": 1, "vars": { "result": "[]", "n": 1 } },
+        { "line": 2, "vars": { "result": "[]", "n": 1 } },
+        { "line": 1, "vars": { "result": "[]", "n": 2 } },
+        { "line": 2, "vars": { "result": "[]", "n": 2 } },
+        { "line": 1, "vars": { "result": "[]", "n": 3 } },
+        { "line": 3, "vars": { "result": "[3]", "n": 3 } },
+        { "line": 1, "vars": { "result": "[3]", "n": 4 } },
+        { "line": 3, "vars": { "result": "[3,4]", "n": 4 } },
+        { "line": 1, "vars": { "result": "[3,4]", "n": 5 } },
+        { "line": 3, "vars": { "result": "[3,4,5]", "n": 5 } },
+        { "line": 6, "vars": { "result": "[3,4,5]" } }
+      ],
+      "question": "What value is displayed?",
+      "options": ["2", "3", "4", "5"], "answer": 1,
+      "explanation": "Only values > 2 are appended: 3, 4, 5. LENGTH = 3."
+    },
+    {
+      "type": "trace", "topic": "iteration",
+      "title": "Trace nested loops",
+      "code": ["total ← 0", "FOR EACH i IN [1, 2] {", "  FOR EACH j IN [10, 20] {", "    total ← total + j", "  }", "}", "DISPLAY(total)"],
+      "steps": [
+        { "line": 0, "vars": { "total": 0 } },
+        { "line": 1, "vars": { "total": 0, "i": 1 } },
+        { "line": 2, "vars": { "total": 0, "i": 1, "j": 10 } },
+        { "line": 3, "vars": { "total": 10, "i": 1, "j": 10 } },
+        { "line": 2, "vars": { "total": 10, "i": 1, "j": 20 } },
+        { "line": 3, "vars": { "total": 30, "i": 1, "j": 20 } },
+        { "line": 1, "vars": { "total": 30, "i": 2 } },
+        { "line": 2, "vars": { "total": 30, "i": 2, "j": 10 } },
+        { "line": 3, "vars": { "total": 40, "i": 2, "j": 10 } },
+        { "line": 2, "vars": { "total": 40, "i": 2, "j": 20 } },
+        { "line": 3, "vars": { "total": 60, "i": 2, "j": 20 } },
+        { "line": 6, "vars": { "total": 60 } }
+      ],
+      "question": "What is displayed?",
+      "options": ["30", "60", "90", "120"], "answer": 1,
+      "explanation": "Inner loop adds (10+20)=30 each outer iteration. Two outer iterations → 60."
+    },
+    {
+      "type": "multiple_choice", "topic": "iteration",
+      "question": "After this code, what is nums?",
+      "code": "nums ← [3, 6, 9]\nAPPEND(nums, 12)\nINSERT(nums, 1, 0)",
+      "options": ["[3, 6, 9, 12]", "[0, 3, 6, 9, 12]", "[12, 3, 6, 9, 0]", "[0, 12, 3, 6, 9]"],
+      "answer": 1,
+      "explanation": "APPEND adds 12 to end. INSERT(list, 1, 0) puts 0 at position 1."
+    },
+    {
+      "type": "multiple_choice", "topic": "iteration",
+      "question": "To check 4 squares around (x,y), instead of 4 nearly-identical IFs:",
+      "options": ["4 separate IFs is best", "Store offsets [-1,0],[1,0],[0,-1],[0,1] and use FOR EACH", "REPEAT 4 TIMES with no list", "Use only recursion"],
+      "answer": 1,
+      "explanation": "Copy-paste with one variable change = use a list and a loop. Many lines → few."
+    },
+    {
+      "type": "multiple_choice", "topic": "iteration",
+      "question": "What does this code do?",
+      "code": "nums ← [3, 1, 4, 1, 5, 9, 2, 6]\nbig ← nums[1]\nFOR EACH n IN nums {\n  IF (n > big) { big ← n }\n}\nDISPLAY(big)",
+      "options": ["Smallest", "Largest (= 9)", "Sum", "Average"], "answer": 1,
+      "explanation": "Standard 'maximum' pattern. Result: 9."
+    },
+    {
+      "type": "build_loop", "topic": "iteration",
+      "title": "Find the max",
+      "description": "Order these blocks to find the largest value in nums.",
+      "blocks": ["big ← nums[1]", "FOR EACH n IN nums {", "  IF (n > big) {", "    big ← n", "  }", "}", "DISPLAY(big)"],
+      "explanation": "Initialize with first element, scan and update on bigger values."
+    },
+    {
+      "type": "build_loop", "topic": "iteration",
+      "title": "Filter evens",
+      "description": "Order these blocks to build a new list with only even values from nums.",
+      "blocks": ["result ← []", "FOR EACH n IN nums {", "  IF (n MOD 2 = 0) {", "    APPEND(result, n)", "  }", "}", "DISPLAY(result)"],
+      "explanation": "Filter pattern: empty result, scan, append when condition holds."
+    },
+    {
+      "type": "build_loop", "topic": "iteration",
+      "title": "Count matches",
+      "description": "Order these blocks to count how many items in nums equal target.",
+      "blocks": ["count ← 0", "FOR EACH n IN nums {", "  IF (n = target) {", "    count ← count + 1", "  }", "}", "DISPLAY(count)"],
+      "explanation": "Counter pattern: zero out, scan, increment on match."
+    },
+    {
+      "type": "multiple_choice", "topic": "iteration",
+      "question": "What does this display?",
+      "code": "i ← 10\nREPEAT UNTIL (i ≤ 0) {\n  DISPLAY(i)\n  i ← i - 3\n}",
+      "options": ["10 7 4 1", "10 7 4 1 -2", "Loops forever", "Nothing"], "answer": 0,
+      "explanation": "10, 7, 4, 1. Next would be -2, but loop checks i ≤ 0 first → stops."
+    },
+    {
+      "type": "multiple_choice", "topic": "iteration",
+      "question": "What is sum?",
+      "code": "sum ← 0\nFOR EACH n IN [10, 20, 30, 40] {\n  IF (n > 25) { sum ← sum + n }\n}",
+      "options": ["30", "70", "100", "60"], "answer": 1,
+      "explanation": "Only 30 and 40 exceed 25. sum = 30 + 40 = 70."
+    },
+
+    { "_section": "===== DATA ABSTRACTION =====" },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "What is data abstraction?",
+      "options": ["Hiding code in procedures", "Organizing data so programs work with concepts (cell, student) instead of many primitives", "Removing data from a program", "Compressing data"],
+      "answer": 1,
+      "explanation": "Data abstraction = choose a structure matching the problem. A grid problem deserves a 2D list."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "What is grid[2][3]?",
+      "code": "grid ← [ [1, 2, 3],\n         [4, 5, 6],\n         [7, 8, 9] ]",
+      "options": ["2", "3", "6", "8"], "answer": 2,
+      "explanation": "grid[2] = [4,5,6]. Then [3] = 6."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "Track each student's name, grade, and GPA. Best AP-style abstraction:",
+      "options": ["Three parallel lists indexed together", "One string per student combining all three", "Separate variables per student", "Lists are equally bad"],
+      "answer": 0,
+      "explanation": "Parallel lists indexed together. Or list of sublists. Both appear on the exam."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "After grid[2][2] ← 5, grid is:",
+      "code": "grid ← [[0,0,0], [0,0,0], [0,0,0]]",
+      "options": ["[[0,0,0], [0,5,0], [0,0,0]]", "[[0,0,0], [0,0,0], [0,0,5]]", "[[5,0,0], [0,0,0], [0,0,0]]", "[[0,5,0], [0,0,0], [0,0,0]]"],
+      "answer": 0,
+      "explanation": "Row 2, col 2 is the center of the 3×3 grid (1-indexed)."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "Best data structure for tic-tac-toe board?",
+      "options": ["A single string of length 9", "A 2D list (list of lists) representing rows and columns", "Nine separate variables", "A single integer"],
+      "answer": 1,
+      "explanation": "2D list mirrors the grid directly. board[row][col] reads naturally."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "You're tracking 30 students' attendance for 180 school days (present/absent). Best AP-style data abstraction?",
+      "options": ["180 separate variables, one per day", "A 2D list with 30 rows × 180 columns: attendance[student][day]", "One long string of 5,400 characters", "30 separate lists, not grouped together"],
+      "answer": 1,
+      "explanation": "A 2D list mirrors the natural structure. Per-student totals = sum a row; per-day totals = sum a column. Separate variables can't be looped over."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "Which expression accesses the LAST grade in 1-indexed list 'grades'?",
+      "options": ["grades[0]", "grades[1]", "grades[LENGTH(grades)]", "grades[LENGTH(grades) - 1]"],
+      "answer": 2,
+      "explanation": "AP lists are 1-indexed → last is at LENGTH(grades). In Python it'd be LENGTH-1."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "Why might parallel lists (names and ages) be a poor design?",
+      "options": ["Two lists are slower", "They can become out of sync — adding a name without an age breaks pairing", "Use more memory", "Can't store related data"],
+      "answer": 1,
+      "explanation": "Parallel lists require discipline: every add/remove updates BOTH lists."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "Storing temperatures every hour for a week. Reasonable abstraction?",
+      "options": ["168 separate variables", "One flat list of 168 temps", "2D list: 7 rows × 24 cols", "Either flat list or 2D list works"],
+      "answer": 3,
+      "explanation": "Multiple good abstractions. 2D makes 'Monday avg' easy; flat makes 'week avg' easy."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "What is aList?",
+      "code": "aList ← [1, 2, 3]\nAPPEND(aList, 4)\nAPPEND(aList, aList[1])",
+      "options": ["[1, 2, 3, 4]", "[1, 2, 3, 4, 1]", "[1, 2, 3, 4, 4]", "[1, 2, 3, 1, 4]"],
+      "answer": 1,
+      "explanation": "Append 4. Then append aList[1] which is 1."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "grid[1][1] is:",
+      "code": "grid ← [[\"X\",\"O\",\"X\"],[\"O\",\"X\",\"O\"],[\"X\",\"O\",\"X\"]]",
+      "options": ["\"X\"", "\"O\"", "Error", "Depends on language"], "answer": 0,
+      "explanation": "grid[1] = [\"X\",\"O\",\"X\"], then [1] gives \"X\". 1-indexed top-left."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "Total after this code?",
+      "code": "matrix ← [[1, 2], [3, 4], [5, 6]]\ntotal ← 0\nFOR EACH row IN matrix {\n  FOR EACH val IN row {\n    total ← total + val\n  }\n}",
+      "options": ["12", "15", "21", "36"], "answer": 2,
+      "explanation": "Sum every cell: 1+2+3+4+5+6 = 21."
+    },
+
+    { "_section": "===== EFFICIENCY =====" },
+    {
+      "type": "multiple_choice", "topic": "efficiency",
+      "question": "Best describes linear search?",
+      "options": ["Needs sorted; checks middle then halves", "Checks each element in order until target found or end reached", "Random sampling", "Cannot apply to lists"],
+      "answer": 1,
+      "explanation": "Walks through one item at a time. Works on any list."
+    },
+    {
+      "type": "multiple_choice", "topic": "efficiency",
+      "question": "REQUIRED for binary search to work:",
+      "options": ["Only contains numbers", "List must be sorted", "Exactly 100 items", "Unique values"],
+      "answer": 1,
+      "explanation": "Binary search needs sorted data to compare to the middle."
+    },
+    {
+      "type": "multiple_choice", "topic": "efficiency",
+      "question": "Worst-case comparisons for linear search on 1,000,000 items?",
+      "options": ["About 20", "About 1,000", "About 500,000", "About 1,000,000"],
+      "answer": 3,
+      "explanation": "Worst case: target at the end (or absent) — check all 1,000,000 items. About 500,000 would be the AVERAGE case (n/2), not worst."
+    },
+    {
+      "type": "multiple_choice", "topic": "efficiency",
+      "question": "Worst-case comparisons for binary search on 1,000,000 SORTED items?",
+      "options": ["About 20", "About 1,000", "About 1,000,000", "About 500,000"],
+      "answer": 0,
+      "explanation": "Each step halves. log₂(1,000,000) ≈ 20."
+    },
+    {
+      "type": "multiple_choice", "topic": "efficiency",
+      "question": "'Reasonable time' grows like:",
+      "options": ["A polynomial of n (n, n², n³, ...)", "Exponential (2ⁿ)", "Factorial (n!)", "Always exactly n"],
+      "answer": 0,
+      "explanation": "Reasonable = polynomial. Unreasonable = exponential or factorial."
+    },
+    {
+      "type": "multiple_choice", "topic": "efficiency",
+      "question": "Cracking a password by trying every possibility — each extra character roughly multiplies time. This is:",
+      "options": ["Reasonable", "Unreasonable (exponential)", "Linear", "Logarithmic"],
+      "answer": 1,
+      "explanation": "Brute-forcing grows exponentially. That's why long passwords are secure."
+    },
+    {
+      "type": "multiple_choice", "topic": "efficiency",
+      "question": "What is a heuristic?",
+      "options": ["An algorithm that always finds the optimal solution", "A 'good enough' approach when optimal would take too long", "A type of sort", "A binary formula"],
+      "answer": 1,
+      "explanation": "Heuristics trade optimality for speed. GPS picking a fast-ish route in seconds."
+    },
+    {
+      "type": "multiple_choice", "topic": "efficiency",
+      "question": "A: linear time (n steps). B: quadratic (n² steps). For very large n:",
+      "options": ["A is much faster", "B is much faster", "Same", "Depends on language"],
+      "answer": 0,
+      "explanation": "For n=1M: A = 1M steps, B = 1 trillion steps. Linear beats quadratic."
+    },
+    {
+      "type": "multiple_choice", "topic": "efficiency",
+      "question": "A problem is 'undecidable' if:",
+      "options": ["No algorithm can solve it for all inputs in finite time", "Solvable but slow", "Has no useful applications", "Requires the Internet"],
+      "answer": 0,
+      "explanation": "Undecidable = no algorithm exists for all inputs. Famous example: the Halting Problem."
+    },
+    {
+      "type": "multiple_choice", "topic": "efficiency",
+      "question": "Find a name in an UNSORTED list of 100. Which approach?",
+      "options": ["Binary search", "Linear search", "Either works on unsorted", "Must sort first"],
+      "answer": 1,
+      "explanation": "Binary needs sorted data. Linear is correct here."
+    },
+    {
+      "type": "multiple_choice", "topic": "efficiency",
+      "question": "An algorithm runs in time proportional to its input size. This is:",
+      "options": ["Constant", "Linear", "Quadratic", "Exponential"],
+      "answer": 1,
+      "explanation": "Linear time = steps proportional to n. Doubling input ~= doubling time."
+    },
+    {
+      "type": "multiple_choice", "topic": "efficiency",
+      "question": "Why is sorting before binary search worth it for repeated searches?",
+      "options": ["It isn't worth it", "Pay sort cost once, then enjoy log(n) lookups forever", "Binary search auto-sorts", "Sorting is always required"],
+      "answer": 1,
+      "explanation": "Pay sort cost once, then enjoy fast lookups forever."
+    },
+
+    { "_section": "===== DEBUGGING =====" },
+    {
+      "type": "multiple_choice", "topic": "debugging",
+      "question": "What is iterative development?",
+      "options": ["Writing the whole program at once", "Repeatedly building, testing, evaluating, refining", "Using lots of loops", "Writing in iterative languages"],
+      "answer": 1,
+      "explanation": "Build → test → fix → build the next piece. Required for the Create Performance Task."
+    },
+    {
+      "type": "multiple_choice", "topic": "debugging",
+      "question": "Program crashes on negative input. Best first step:",
+      "options": ["Rewrite the entire program", "Identify exactly which line crashes and what triggers it", "Switch languages", "Add features and hope"],
+      "answer": 1,
+      "explanation": "Reproduce and isolate. Only then can you fix."
+    },
+    {
+      "type": "bug_hunt", "topic": "debugging",
+      "code": ["i ← 0", "REPEAT UNTIL (i = 10) {", "  DISPLAY(i)", "  i ← i + 3", "}"],
+      "buggyLine": 1,
+      "options": ["Off-by-one error", "Infinite loop — i jumps over 10 (0,3,6,9,12,...)", "Dead code", "Wrong assignment direction"],
+      "answer": 1,
+      "explanation": "i goes 0,3,6,9,12... never hits exactly 10. Use i ≥ 10 instead."
+    },
+    {
+      "type": "bug_hunt", "topic": "debugging",
+      "code": ["PROCEDURE double(x) {", "  y ← x * 2", "}", "result ← double(7)", "DISPLAY(result)"],
+      "buggyLine": 1,
+      "options": ["Wrong operator", "Missing parameter", "y is computed but never RETURNed — result is empty", "Variable name conflict"],
+      "answer": 2,
+      "explanation": "double() calculates y but never returns it. Add RETURN(y)."
+    },
+    {
+      "type": "bug_hunt", "topic": "debugging",
+      "code": ["mine ← random.choice(squares)", "REPEAT UNTIL (mine NOT IN mines) {", "  mine ← random.choice(squares)", "}", "APPEND(mines, mine)"],
+      "buggyLine": 0,
+      "options": ["Infinite loop", "Dead code — line 0's value is overwritten on line 2 before being used", "Wrong comparison", "Missing return"],
+      "answer": 1,
+      "explanation": "Line 0 picks a random mine, but line 2 picks a new one before the first is used."
+    },
+    {
+      "type": "bug_hunt", "topic": "debugging",
+      "code": ["sum ← 0", "FOR EACH n IN nums {", "  sum ← n", "}", "DISPLAY(sum)"],
+      "buggyLine": 2,
+      "options": ["Should be sum ← sum + n (currently overwrites instead of accumulating)", "List is empty", "Missing parameter", "Wrong loop type"],
+      "answer": 0,
+      "explanation": "Line 2 keeps overwriting sum. Final value is just the LAST element."
+    },
+    {
+      "type": "bug_hunt", "topic": "debugging",
+      "code": ["FOR EACH item IN aList {", "  IF (item = target) {", "    DISPLAY(\"found\")", "  } ELSE {", "    DISPLAY(\"not found\")", "  }", "}"],
+      "buggyLine": 4,
+      "options": ["'not found' prints for every non-matching item — should print once at the end", "Wrong list type", "Infinite loop", "Missing variable"],
+      "answer": 0,
+      "explanation": "If list has 10 items and target is 3rd, you'll see 9 'not found' lines. Move ELSE OUTSIDE the loop."
+    },
+    {
+      "type": "bug_hunt", "topic": "debugging",
+      "code": ["PROCEDURE max(a, b) {", "  IF (a > b) {", "    RETURN(b)", "  } ELSE {", "    RETURN(a)", "  }", "}"],
+      "buggyLine": 2,
+      "options": ["RETURN values are swapped — should return a when a > b, not b", "Missing parameter", "Infinite loop", "Wrong comparison"],
+      "answer": 0,
+      "explanation": "When a > b, the bigger value is a. Currently returns the smaller."
+    },
+    {
+      "type": "multiple_choice", "topic": "debugging",
+      "question": "A 'boundary' or 'edge' case is:",
+      "options": ["Input at extreme limits (empty, 0, very large, negative)", "Code at edge of screen", "First line of a procedure", "Any invalid input"],
+      "answer": 0,
+      "explanation": "Boundary cases hide bugs. Always test empty, single-element, very large, zero, negative."
+    },
+    {
+      "type": "multiple_choice", "topic": "debugging",
+      "question": "What is 'dead code'?",
+      "options": ["Code that runs slowly", "Code that can never be reached, or whose result is overwritten before use", "Code with bugs", "Code that displays output"],
+      "answer": 1,
+      "explanation": "Like x ← 5 immediately followed by x ← 10."
+    },
+    {
+      "type": "multiple_choice", "topic": "debugging",
+      "question": "Why test after each small change?",
+      "options": ["Makes program slower", "When a bug appears, you know it came from the most recent change", "Required by exam", "Changes the syntax"],
+      "answer": 1,
+      "explanation": "Test small, find bugs fast."
+    },
+    {
+      "type": "multiple_choice", "topic": "debugging",
+      "question": "Program works on small lists but crashes on lists with 1 million items. Likely:",
+      "options": ["A logic error", "A performance/efficiency problem (too slow or out of memory)", "A syntax error", "Incompatible data type"],
+      "answer": 1,
+      "explanation": "Bugs that scale with input size are usually efficiency bugs."
+    },
+
+    { "_section": "===== BOOLEAN LOGIC =====" },
+    { "type": "boolean", "topic": "boolean", "expression": "true AND false", "answer": "false", "explanation": "AND is true ONLY when both operands are true." },
+    { "type": "boolean", "topic": "boolean", "expression": "true OR false", "answer": "true", "explanation": "OR is true if AT LEAST ONE operand is true." },
+    { "type": "boolean", "topic": "boolean", "expression": "NOT(false)", "answer": "true", "explanation": "NOT flips the value." },
+    { "type": "boolean", "topic": "boolean", "expression": "NOT(true AND false)", "answer": "true", "explanation": "Inside first: true AND false = false. NOT(false) = true." },
+    { "type": "boolean", "topic": "boolean", "expression": "NOT(true OR false)", "answer": "false", "explanation": "Inside first: true OR false = true. NOT(true) = false." },
+    { "type": "boolean", "topic": "boolean", "expression": "(true AND false) OR true", "answer": "true", "explanation": "Left: false. Right: true. false OR true = true." },
+    { "type": "boolean", "topic": "boolean", "expression": "NOT(NOT(true))", "answer": "true", "explanation": "Double negative cancels." },
+    {
+      "type": "multiple_choice", "topic": "boolean",
+      "question": "If a = 5 and b = 10, what is (a > 3) AND (b < 8)?",
+      "options": ["true", "false", "Error", "5"], "answer": 1,
+      "explanation": "(5 > 3) = true. (10 < 8) = false. true AND false = false."
+    },
+    {
+      "type": "multiple_choice", "topic": "boolean",
+      "question": "Equivalent to NOT(x > 5)?",
+      "options": ["x < 5", "x ≤ 5", "x = 5", "x ≥ 5"], "answer": 1,
+      "explanation": "Opposite of 'greater than 5' = 'less than OR EQUAL to 5'."
+    },
+    {
+      "type": "multiple_choice", "topic": "boolean",
+      "question": "Equivalent to NOT(a AND b)? (De Morgan's Law)",
+      "options": ["(NOT a) AND (NOT b)", "(NOT a) OR (NOT b)", "a OR b", "a AND b"], "answer": 1,
+      "explanation": "De Morgan: NOT(a AND b) = (NOT a) OR (NOT b)."
+    },
+    {
+      "type": "multiple_choice", "topic": "boolean",
+      "question": "Equivalent to NOT(a OR b)?",
+      "options": ["(NOT a) OR (NOT b)", "(NOT a) AND (NOT b)", "a AND b", "a OR b"], "answer": 1,
+      "explanation": "De Morgan part 2. When NOT moves in, AND/OR swap."
+    },
+    {
+      "type": "multiple_choice", "topic": "boolean",
+      "question": "Users may enter if age ≥ 18 OR has parental permission. Correct expression:",
+      "options": ["(age ≥ 18) AND (hasPermission = true)", "(age ≥ 18) OR (hasPermission = true)", "NOT(age ≥ 18) OR (hasPermission = true)", "(age < 18) AND (hasPermission = false)"],
+      "answer": 1,
+      "explanation": "'A or B' translates to OR."
+    },
+
+    { "_section": "===== BINARY =====" },
+    {
+      "type": "multiple_choice", "topic": "binary",
+      "question": "Decimal value of binary 1011?",
+      "options": ["7", "9", "11", "13"], "answer": 2,
+      "explanation": "1×8 + 0×4 + 1×2 + 1×1 = 11."
+    },
+    { "type": "binary", "topic": "binary", "target": 13, "explanation": "13 = 8 + 4 + 1 = 00001101." },
+    { "type": "binary", "topic": "binary", "target": 42, "explanation": "42 = 32 + 8 + 2 = 00101010." },
+    { "type": "binary", "topic": "binary", "target": 100, "explanation": "100 = 64 + 32 + 4 = 01100100." },
+    { "type": "binary", "topic": "binary", "target": 173, "explanation": "173 = 128 + 32 + 8 + 4 + 1 = 10101101." },
+    { "type": "binary", "topic": "binary", "target": 200, "explanation": "200 = 128 + 64 + 8 = 11001000." },
+    {
+      "type": "multiple_choice", "topic": "binary",
+      "question": "Distinct values with 4 bits?",
+      "options": ["4", "8", "16", "32"], "answer": 2,
+      "explanation": "2⁴ = 16."
+    },
+    {
+      "type": "multiple_choice", "topic": "binary",
+      "question": "Bits in a byte?",
+      "options": ["1", "4", "8", "16"], "answer": 2,
+      "explanation": "A byte = 8 bits."
+    },
+    {
+      "type": "multiple_choice", "topic": "binary",
+      "question": "Why do computers use binary?",
+      "options": ["More accurate than decimal", "Circuits naturally have two states (on/off)", "Less storage", "Decimal can't do fractions"],
+      "answer": 1,
+      "explanation": "Hardware reliability. Two states are easy to distinguish."
+    },
+    {
+      "type": "multiple_choice", "topic": "binary",
+      "question": "What is overflow error?",
+      "options": ["Too much data on screen", "Number too large to represent in available bits", "Network error", "Invalid input"],
+      "answer": 1,
+      "explanation": "8-bit max = 255. Try to store 256 → wrap to 0 or error."
+    },
+    {
+      "type": "multiple_choice", "topic": "binary",
+      "question": "RGB uses 8 bits each for R, G, B. Distinct colors?",
+      "options": ["256", "768", "16,777,216", "1,000,000"], "answer": 2,
+      "explanation": "256 × 256 × 256 ≈ 16.7 million. 'True color.'"
+    },
+    {
+      "type": "multiple_choice", "topic": "binary",
+      "question": "Hexadecimal (base 16) uses how many distinct symbols?",
+      "options": ["2", "8", "10", "16"], "answer": 3,
+      "explanation": "0–9 plus A–F. Two hex digits = one byte."
+    },
+
+    { "_section": "===== MEDIA / COMPRESSION =====" },
+    {
+      "type": "multiple_choice", "topic": "media",
+      "question": "A digital image is fundamentally:",
+      "options": ["A continuous wave", "A grid of pixels, each storing a color", "A string of letters", "A math equation"],
+      "answer": 1,
+      "explanation": "Every digital image is a 2D array of pixels."
+    },
+    {
+      "type": "multiple_choice", "topic": "media",
+      "question": "Lossy compression:",
+      "options": ["Restores original perfectly", "Discards some info to make files smaller", "Cannot use on images", "Same as encryption"],
+      "answer": 1,
+      "explanation": "JPEG drops detail your eye won't notice."
+    },
+    {
+      "type": "multiple_choice", "topic": "media",
+      "question": "Lossless compression:",
+      "options": ["Discards info permanently", "Restores original exactly when decompressed", "Only works on text", "Always more effective than lossy"],
+      "answer": 1,
+      "explanation": "ZIP, PNG, FLAC. Decompressed = bit-for-bit identical."
+    },
+    {
+      "type": "multiple_choice", "topic": "media",
+      "question": "Which is a LOSSLESS image format?",
+      "options": ["JPEG", "MP3", "PNG", "MPEG"], "answer": 2,
+      "explanation": "PNG is lossless. JPEG is lossy."
+    },
+    {
+      "type": "multiple_choice", "topic": "media",
+      "question": "Which is a LOSSY audio format?",
+      "options": ["WAV", "MP3", "PNG", "TXT"], "answer": 1,
+      "explanation": "MP3 is lossy. WAV is uncompressed (effectively lossless)."
+    },
+    {
+      "type": "multiple_choice", "topic": "media",
+      "question": "Doubling the sampling rate of an audio recording (e.g., 22 kHz → 44 kHz) generally:",
+      "options": ["Halves the file size", "Captures more high-frequency detail but roughly doubles the file size", "Has no effect on the file", "Converts the audio from lossy to lossless"],
+      "answer": 1,
+      "explanation": "More samples per second = more detail captured AND more bytes stored. CDs sample at 44.1 kHz; phone calls at ~8 kHz to save bandwidth."
+    },
+    {
+      "type": "multiple_choice", "topic": "media",
+      "question": "An uncompressed 100×100-pixel image with 24 bits of color per pixel takes about how much storage?",
+      "options": ["100 bits", "10,000 bits", "240,000 bits (~30 KB)", "10 MB"],
+      "answer": 2,
+      "explanation": "100 × 100 = 10,000 pixels, each 24 bits = 240,000 bits = 30,000 bytes ≈ 30 KB. Compression (e.g., PNG, JPEG) can shrink this dramatically."
+    },
+    {
+      "type": "multiple_choice", "topic": "media",
+      "question": "Sampling an analog signal converts it digital by:",
+      "options": ["Removing noise", "Recording its value at regular intervals", "Compressing", "Encrypting"],
+      "answer": 1,
+      "explanation": "Sampling bridges analog (continuous) to digital (discrete). CD samples 44,100/sec."
+    },
+
+    { "_section": "===== INTERNET / NETWORKS =====" },
+    {
+      "type": "multiple_choice", "topic": "internet",
+      "question": "What is an IP address?",
+      "options": ["A username", "A unique identifier for a device on a network", "A website name", "A type of compression"],
+      "answer": 1,
+      "explanation": "Every device needs a unique IP. Like 192.168.1.5."
+    },
+    {
+      "type": "multiple_choice", "topic": "internet",
+      "question": "Internet data is broken into smaller chunks called:",
+      "options": ["Packets", "Pixels", "Pages", "Programs"], "answer": 0,
+      "explanation": "Packets allow many paths, fault recovery, and shared capacity."
+    },
+    {
+      "type": "multiple_choice", "topic": "internet",
+      "question": "What does DNS do?",
+      "options": ["Encrypts data", "Translates domain names (example.com) into IP addresses", "Compresses files", "Blocks ads"],
+      "answer": 1,
+      "explanation": "DNS = the Internet's phonebook."
+    },
+    {
+      "type": "multiple_choice", "topic": "internet",
+      "question": "The Internet is 'fault tolerant' because:",
+      "options": ["No errors are allowed", "If one path fails, data takes a different route", "Uses error correction only", "Packets always arrive in order"],
+      "answer": 1,
+      "explanation": "Multiple redundant paths mean a single failure can't take down the whole Internet."
+    },
+    {
+      "type": "multiple_choice", "topic": "internet",
+      "question": "Internet vs World Wide Web:",
+      "options": ["Same thing", "Internet = global network of devices; Web = one service (websites via HTTP)", "Web is older", "Internet is only email"],
+      "answer": 1,
+      "explanation": "Internet = infrastructure. Web = one app on top of it."
+    },
+    {
+      "type": "multiple_choice", "topic": "internet",
+      "question": "A 'protocol' in networking is:",
+      "options": ["A type of cable", "Agreed-upon rules for how devices communicate", "Connection speed", "A language"],
+      "answer": 1,
+      "explanation": "Like a language — both sides must agree on format."
+    },
+    {
+      "type": "multiple_choice", "topic": "internet",
+      "question": "What does HTTPS provide that HTTP doesn't?",
+      "options": ["Faster speed", "Encryption between browser and server", "Free Internet", "File downloads"],
+      "answer": 1,
+      "explanation": "S = Secure. HTTPS encrypts traffic."
+    },
+    {
+      "type": "multiple_choice", "topic": "internet",
+      "question": "'Bandwidth' is:",
+      "options": ["Data that can be transmitted per unit time", "Number of websites visited", "Monitor brightness", "Encryption strength"],
+      "answer": 0,
+      "explanation": "Measured in bps, Mbps, Gbps."
+    },
+    {
+      "type": "multiple_choice", "topic": "internet",
+      "question": "'Redundancy' in network design means:",
+      "options": ["Sending packets many times to slow others", "Multiple paths between devices, so one path failing doesn't break the network", "Duplicate IPs", "Removing repetition"],
+      "answer": 1,
+      "explanation": "Redundancy = fault tolerance enabler."
+    },
+    {
+      "type": "multiple_choice", "topic": "internet",
+      "question": "Packet from CA to NY passes through how many routers?",
+      "options": ["Exactly one", "Exactly two", "Many — a dozen+; route may differ packet to packet", "Zero"],
+      "answer": 2,
+      "explanation": "Packets hop router to router. Different packets in same conversation can take different paths."
+    },
+
+    { "_section": "===== SECURITY =====" },
+    {
+      "type": "multiple_choice", "topic": "security",
+      "question": "In SYMMETRIC encryption:",
+      "options": ["Same secret key for encrypt and decrypt", "Sender public, receiver private", "No key needed", "Only receiver has a key"],
+      "answer": 0,
+      "explanation": "Same key both sides. Fast, but you must share it securely first."
+    },
+    {
+      "type": "multiple_choice", "topic": "security",
+      "question": "In PUBLIC-KEY (asymmetric) encryption:",
+      "options": ["Both share one secret key", "Each person has a public key (shared) and private key (secret); messages encrypted with public can only be decrypted with matching private", "Same key worldwide", "No keys"],
+      "answer": 1,
+      "explanation": "Anyone can encrypt TO me using my public key. Only I (private) can read."
+    },
+    {
+      "type": "multiple_choice", "topic": "security",
+      "question": "An HTTPS lock icon in your browser tells you:",
+      "options": ["The website is trustworthy and safe to share data with", "The connection is encrypted AND the certificate matches the domain — but the site itself could still be a scam", "All data on the site is private even from the website owner", "The site cannot be hacked"],
+      "answer": 1,
+      "explanation": "HTTPS guarantees the channel is encrypted and you're talking to the domain you typed. It does NOT vouch for the site's honesty — phishing sites use HTTPS too."
+    },
+    {
+      "type": "multiple_choice", "topic": "security",
+      "question": "What is phishing?",
+      "options": ["A protocol", "Tricking someone into revealing info by pretending to be trustworthy", "Compression", "Search algorithm"],
+      "answer": 1,
+      "explanation": "Verify suspicious requests through a separate channel."
+    },
+    {
+      "type": "multiple_choice", "topic": "security",
+      "question": "Multi-factor authentication (MFA) improves security by:",
+      "options": ["Requiring longer passwords", "Requiring 2+ INDEPENDENT proofs (something you know/have/are)", "Encrypting hard drives", "Using public-key crypto"],
+      "answer": 1,
+      "explanation": "Even if password is stolen, attacker still needs your phone or fingerprint."
+    },
+    {
+      "type": "multiple_choice", "topic": "security",
+      "question": "What is malware?",
+      "options": ["Hardware that breaks", "Software designed to harm, exploit, or gain unauthorized access", "Out-of-date software", "Secure protocol"],
+      "answer": 1,
+      "explanation": "Umbrella term: viruses, worms, ransomware, spyware, trojans."
+    },
+    {
+      "type": "multiple_choice", "topic": "security",
+      "question": "You use a long, random, unique password for every site. Why does multi-factor authentication still help?",
+      "options": ["Long passwords stop being secure after one year", "If a site's password database leaks, the attacker still needs your second factor (phone, key) to log in", "MFA makes your password longer", "MFA encrypts your password during transmission"],
+      "answer": 1,
+      "explanation": "Database breaches expose even strong passwords. The second factor — something you HAVE (phone, hardware key) or ARE (fingerprint) — blocks the attacker from completing the login."
+    },
+    {
+      "type": "multiple_choice", "topic": "security",
+      "question": "Main reason to keep software updated:",
+      "options": ["Newer looks prettier", "Updates patch security vulnerabilities attackers exploit", "Older versions take more space", "Required by law"],
+      "answer": 1,
+      "explanation": "New vulnerabilities are found constantly. Updates fix them."
+    },
+
+    { "_section": "===== IMPACT =====" },
+    {
+      "type": "multiple_choice", "topic": "impact",
+      "question": "'Digital divide' refers to:",
+      "options": ["Split between social media platforms", "Gap between those with and without access to modern computing tech", "Hardware vs software", "Binary vs decimal"],
+      "answer": 1,
+      "explanation": "Affects job access, education, healthcare. Income, geography, age, national lines."
+    },
+    {
+      "type": "multiple_choice", "topic": "impact",
+      "question": "Algorithmic bias occurs when:",
+      "options": ["Algorithm runs slowly", "Biased training data or design causes systematically unfair results for certain groups", "Uses too much memory", "Wrong language"],
+      "answer": 1,
+      "explanation": "Facial recognition trained on one demographic does worse on others."
+    },
+    {
+      "type": "multiple_choice", "topic": "impact",
+      "question": "Creative Commons is:",
+      "options": ["A computer type", "Standardized licenses for sharing/reuse of creative work", "Image protocol", "Encryption algorithm"],
+      "answer": 1,
+      "explanation": "CC BY, CC BY-SA, CC BY-NC. Clear rules without giving up copyright."
+    },
+    {
+      "type": "multiple_choice", "topic": "impact",
+      "question": "Personally Identifiable Information (PII) includes:",
+      "options": ["Only full name", "Info that can identify a person — name, address, SSN, phone, email", "Only password", "Only IP address"],
+      "answer": 1,
+      "explanation": "PII is broader than people think. ZIP + birthdate + gender uniquely identifies most Americans."
+    },
+    {
+      "type": "multiple_choice", "topic": "impact",
+      "question": "Crowdsourcing is:",
+      "options": ["Hosting on multiple servers", "Obtaining info, ideas, contributions from a large online group", "A network attack", "Compression"],
+      "answer": 1,
+      "explanation": "Wikipedia, Kickstarter, open source."
+    },
+    {
+      "type": "multiple_choice", "topic": "impact",
+      "question": "Citizen science enabled by computing example:",
+      "options": ["Astronomy app letting volunteers classify galaxy images", "One scientist alone", "Government-only", "Private internal"],
+      "answer": 0,
+      "explanation": "Galaxy Zoo, eBird, Foldit."
+    },
+    {
+      "type": "multiple_choice", "topic": "impact",
+      "question": "Open-source software is:",
+      "options": ["You must pay", "Source code freely available to view, modify, distribute (under licenses)", "Requires Internet", "No copyright at all"],
+      "answer": 1,
+      "explanation": "Open source ≠ no copyright. Licensed (MIT, GPL) but freely usable."
+    },
+    {
+      "type": "multiple_choice", "topic": "impact",
+      "question": "A drawback of facial-recognition technology:",
+      "options": ["Too slow", "Privacy concerns + potential for surveillance, misuse, bias", "Too much electricity", "Only works for famous people"],
+      "answer": 1,
+      "explanation": "Evaluate BOTH benefits and harms."
+    }
+  ]
+}
