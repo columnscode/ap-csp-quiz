@@ -37,10 +37,12 @@ export function evaluateAnswer(q, submitted) {
     case "boolean":
       return submitted === q.answer;
     case "binary":
-      return !!submitted?.correct;
     case "bug_hunt":
-      return !!submitted?.correct;
     case "build_loop":
+    case "match_pairs":
+    case "fill_in_blank":
+    case "click_to_locate_bug":
+    case "order_steps":
       return !!submitted?.correct;
     default:
       return false;

@@ -21,12 +21,16 @@
     "     of app.jsx (or ask Claude to do it).",
     "",
     "QUESTION TYPES (see _typeGuide below for full schemas):",
-    "  multiple_choice  — classic A/B/C/D",
-    "  trace            — animated step-through with live variables",
-    "  binary           — toggle 8 bits to match a target decimal",
-    "  bug_hunt         — click the buggy line, then identify the bug",
-    "  boolean          — rapid TRUE / FALSE evaluation",
-    "  build_loop       — reorder scrambled pseudocode blocks",
+    "  multiple_choice      — classic A/B/C/D",
+    "  trace                — animated step-through with live variables",
+    "  binary               — toggle 8 bits to match a target decimal",
+    "  bug_hunt             — click the buggy line, then identify the bug",
+    "  boolean              — rapid TRUE / FALSE evaluation",
+    "  build_loop           — reorder scrambled pseudocode blocks",
+    "  match_pairs          — pair items between two columns (1:1)",
+    "  fill_in_blank        — code with {{N}} blanks filled by dropdowns",
+    "  click_to_locate_bug  — tap the buggy line (no follow-up MCQ)",
+    "  order_steps          — drag plain-text items into the right order",
     "",
     "TOPICS (used for grouping and per-topic scoring):",
     "  procedures, iteration, data, efficiency, debugging,",
@@ -218,6 +222,125 @@
         "description": "Order these blocks to correctly sum the values in nums.",
         "blocks": ["total ← 0", "FOR EACH n IN nums {", "  total ← total + n", "}", "DISPLAY(total)"],
         "explanation": "Standard accumulator pattern: initialize, loop and update, then display."
+      }
+    },
+
+    "match_pairs": {
+      "_when_to_use": "Two parallel concepts that have a 1:1 mapping. Great for: term ↔ definition, algorithm ↔ Big-O, file extension ↔ format kind. Tap a left item, tap a right item to pair them.",
+      "_schema": {
+        "type": "match_pairs  (REQUIRED)",
+        "topic": "string (REQUIRED)",
+        "prompt": "string (REQUIRED, what the student should match)",
+        "left":   "array of strings (REQUIRED, 2–5 items)",
+        "right":  "array of strings (REQUIRED, MUST be same length as left). Order is independent of left — the matching is via 'answer'.",
+        "answer": "array of indices into 'right' (REQUIRED, same length as left). answer[i] is the right-index that pairs with left[i]. Must be a one-to-one mapping (no repeated indices).",
+        "explanation": "string (REQUIRED)"
+      },
+      "_authoring_tips": [
+        "3–4 pairs is the sweet spot. 5 is the max for usability.",
+        "Make every wrong-pair plausible to a half-prepared student — avoid filler.",
+        "Order the right-hand side so the correct mapping is NOT just [0,1,2,...] — vary it.",
+        "Keep each item under ~30 chars so cells don't wrap awkwardly on phones."
+      ],
+      "_example": {
+        "type": "match_pairs",
+        "topic": "efficiency",
+        "prompt": "Match each algorithm to its worst-case time complexity.",
+        "left":   ["Linear search", "Binary search (sorted)", "Bubble sort", "Hash table lookup"],
+        "right":  ["O(log n)", "O(n)", "O(1)", "O(n²)"],
+        "answer": [1, 0, 3, 2],
+        "explanation": "Linear scan = O(n). Binary halves = O(log n). Bubble compares every pair = O(n²). Hash maps to a bucket directly = O(1)."
+      }
+    },
+
+    "fill_in_blank": {
+      "_when_to_use": "Code with one or more {{N}} placeholders, each filled by a small dropdown. Tests precise syntax recall and operator/function selection. Best when the student should already know the SHAPE and just needs to drop in the right pieces.",
+      "_schema": {
+        "type": "fill_in_blank  (REQUIRED)",
+        "topic": "string (REQUIRED)",
+        "question": "string (REQUIRED, what the completed code should do)",
+        "code": "array of strings (REQUIRED, one per line). Use {{0}}, {{1}}, ... wherever a blank goes. Preserve indentation with leading spaces.",
+        "blanks": "array of objects (REQUIRED, in numerical order). Each blank: { 'options': ['a','b','c','d'] (REQUIRED, exactly 4), 'answer': 0–3 (REQUIRED) }.",
+        "explanation": "string (REQUIRED)"
+      },
+      "_authoring_tips": [
+        "1–3 blanks per question. More than 3 becomes a slot-fill puzzle, not a learning tool.",
+        "Each blank's 4 options should be plausible: same TYPE (operators with operators, values with values).",
+        "Avoid blanks at the START of a line — students lose the visual anchor.",
+        "Don't use {{N}} inside string literals; the renderer will turn it into a select."
+      ],
+      "_example": {
+        "type": "fill_in_blank",
+        "topic": "iteration",
+        "question": "Complete the code so it sums the values in nums.",
+        "code": [
+          "total ← {{0}}",
+          "FOR EACH n IN nums {",
+          "  total ← total {{1}} n",
+          "}",
+          "DISPLAY(total)"
+        ],
+        "blanks": [
+          { "options": ["0", "1", "[]", "nums"], "answer": 0 },
+          { "options": ["+", "-", "*", "←"],     "answer": 0 }
+        ],
+        "explanation": "Initialize accumulator to 0, then add each value into it."
+      }
+    },
+
+    "click_to_locate_bug": {
+      "_when_to_use": "Show buggy code and have the student tap the offending line. Simpler cousin of bug_hunt — no follow-up MCQ for bug TYPE. Use when the teaching value is 'spot the bug', not 'name its category'.",
+      "_schema": {
+        "type": "click_to_locate_bug  (REQUIRED)",
+        "topic": "string (REQUIRED, almost always 'debugging')",
+        "question": "string (OPTIONAL, override the default 'Tap the line containing the bug.' prompt)",
+        "code": "array of strings (REQUIRED, one per line; use leading spaces for indentation)",
+        "buggyLine": "number (REQUIRED, 0-indexed line number)",
+        "explanation": "string (REQUIRED, point at the bug AND say what would fix it)"
+      },
+      "_authoring_tips": [
+        "5–10 lines of code. Too few and there's no spotting; too many and it's a reading test.",
+        "Make sure NO OTHER LINE could plausibly be 'the bug' — only one true defect.",
+        "Save bug_hunt for cases where the bug TYPE is the more interesting question."
+      ],
+      "_example": {
+        "type": "click_to_locate_bug",
+        "topic": "debugging",
+        "code": [
+          "PROCEDURE allPositive(nums) {",
+          "  FOR EACH n IN nums {",
+          "    IF (n > 0) { RETURN(true) }",
+          "  }",
+          "  RETURN(false)",
+          "}"
+        ],
+        "buggyLine": 2,
+        "explanation": "Returning true on the FIRST positive is wrong — we should only return true after confirming ALL are positive. The fix: return false immediately when we find a non-positive, and return true after the loop."
+      }
+    },
+
+    "order_steps": {
+      "_when_to_use": "Reorder a list of items into the correct sequence. Generalization of build_loop for non-code content: ordering steps of an algorithm in plain English, sorting Big-O complexities by speed, putting historical events in order. Use build_loop for actual code-block ordering.",
+      "_schema": {
+        "type": "order_steps  (REQUIRED)",
+        "topic": "string (REQUIRED)",
+        "title": "string (REQUIRED, short label)",
+        "description": "string (REQUIRED, what 'in order' means here — fastest first? alphabetical? chronological?)",
+        "items": "array of strings (REQUIRED, 3–6 items, in their CORRECT ORDER. The app shuffles for display.)",
+        "explanation": "string (REQUIRED)"
+      },
+      "_authoring_tips": [
+        "3–5 items. 6+ feels like work, not learning.",
+        "Make sure there's EXACTLY ONE correct order — ties are a flaw.",
+        "If items are code, prefer build_loop instead — its mono styling fits better."
+      ],
+      "_example": {
+        "type": "order_steps",
+        "topic": "efficiency",
+        "title": "Sort by speed (fastest first)",
+        "description": "Order these time complexities from fastest to slowest for very large n.",
+        "items": ["O(1)", "O(log n)", "O(n)", "O(n log n)", "O(n²)"],
+        "explanation": "Constant beats logarithmic beats linear beats linearithmic beats quadratic. As n grows, the gap between any two is enormous."
       }
     }
   },
@@ -1081,6 +1204,479 @@
       "options": ["Too slow", "Privacy concerns + potential for surveillance, misuse, bias", "Too much electricity", "Only works for famous people"],
       "answer": 1,
       "explanation": "Evaluate BOTH benefits and harms."
+    },
+
+    { "_section": "===== NEW TYPES (test instances) =====" },
+    {
+      "type": "match_pairs", "topic": "efficiency",
+      "prompt": "Match each algorithm to its worst-case time complexity.",
+      "left":   ["Linear search", "Binary search (sorted)", "Bubble sort", "Hash table lookup"],
+      "right":  ["O(log n)", "O(n)", "O(1)", "O(n²)"],
+      "answer": [1, 0, 3, 2],
+      "explanation": "Linear scan = O(n). Binary halves = O(log n). Bubble compares every pair = O(n²). Hash maps directly to a bucket = O(1)."
+    },
+    {
+      "type": "fill_in_blank", "topic": "iteration",
+      "question": "Complete the code so it sums the values in nums.",
+      "code": [
+        "total ← {{0}}",
+        "FOR EACH n IN nums {",
+        "  total ← total {{1}} n",
+        "}",
+        "DISPLAY(total)"
+      ],
+      "blanks": [
+        { "options": ["0", "1", "[]", "nums"], "answer": 0 },
+        { "options": ["+", "-", "*", "←"],     "answer": 0 }
+      ],
+      "explanation": "Initialize accumulator to 0, then add each value into it."
+    },
+    {
+      "type": "click_to_locate_bug", "topic": "debugging",
+      "code": [
+        "PROCEDURE allPositive(nums) {",
+        "  FOR EACH n IN nums {",
+        "    IF (n > 0) { RETURN(true) }",
+        "  }",
+        "  RETURN(false)",
+        "}"
+      ],
+      "buggyLine": 2,
+      "explanation": "Returning true on the FIRST positive is wrong — we should only return true after confirming ALL are positive. Fix: return false on the first non-positive, then return true after the loop."
+    },
+    {
+      "type": "order_steps", "topic": "efficiency",
+      "title": "Sort by speed (fastest first)",
+      "description": "Order these time complexities from fastest to slowest as n grows large.",
+      "items": ["O(1)", "O(log n)", "O(n)", "O(n log n)", "O(n²)"],
+      "explanation": "Constant beats logarithmic beats linear beats linearithmic beats quadratic. As n grows, gaps grow huge."
+    },
+
+    { "_section": "===== STEP 5: PROCEDURES (6) =====" },
+    {
+      "type": "multiple_choice", "topic": "procedures",
+      "question": "What does triple(double(2)) return?",
+      "code": "PROCEDURE double(n) { RETURN(n * 2) }\nPROCEDURE triple(n) { RETURN(n * 3) }",
+      "options": ["6", "8", "12", "24"], "answer": 2,
+      "explanation": "Inner first: double(2) = 4. Outer: triple(4) = 12. Procedures compose like math functions."
+    },
+    {
+      "type": "trace", "topic": "procedures",
+      "title": "Trace nested calls",
+      "code": ["PROCEDURE addOne(n) { RETURN(n + 1) }", "PROCEDURE square(n) { RETURN(n * n) }", "x ← addOne(3)", "y ← square(x)", "DISPLAY(y)"],
+      "steps": [
+        { "line": 2, "vars": { "x": 4 } },
+        { "line": 3, "vars": { "x": 4, "y": 16 } },
+        { "line": 4, "vars": { "x": 4, "y": 16 } }
+      ],
+      "question": "What is displayed?",
+      "options": ["4", "9", "16", "25"], "answer": 2,
+      "explanation": "addOne(3) = 4. Then square(4) = 16. y is 16."
+    },
+    {
+      "type": "build_loop", "topic": "procedures",
+      "title": "Build absolute value",
+      "description": "Order these blocks to define a procedure absVal(n) that returns |n|, then call it on -7.",
+      "blocks": ["PROCEDURE absVal(n) {", "  IF (n < 0) { RETURN(-n) }", "  RETURN(n)", "}", "result ← absVal(-7)", "DISPLAY(result)"],
+      "explanation": "Define before call. The IF returns -n for negatives; otherwise we fall through and return n unchanged."
+    },
+    {
+      "type": "fill_in_blank", "topic": "procedures",
+      "question": "Complete the procedure to return true if n is divisible by 3.",
+      "code": [
+        "PROCEDURE div3(n) {",
+        "  IF (n {{0}} 3 = 0) {",
+        "    RETURN({{1}})",
+        "  } ELSE {",
+        "    RETURN(false)",
+        "  }",
+        "}"
+      ],
+      "blanks": [
+        { "options": ["MOD", "/", "*", "-"],         "answer": 0 },
+        { "options": ["true", "false", "n", "0"],    "answer": 0 }
+      ],
+      "explanation": "MOD gives the remainder. Remainder of 0 means evenly divisible — return true."
+    },
+    {
+      "type": "bug_hunt", "topic": "procedures",
+      "code": ["PROCEDURE greet(name) {", "  message ← \"Hello, \" + name", "}", "DISPLAY(greet(\"Sam\"))"],
+      "buggyLine": 1,
+      "options": ["Wrong concatenation operator", "name parameter is optional", "message is built but never RETURNed — caller gets nothing", "Missing curly braces"],
+      "answer": 2,
+      "explanation": "DISPLAY(greet(...)) needs greet to RETURN something. As written, the procedure builds a string then throws it away. Add RETURN(message)."
+    },
+    {
+      "type": "bug_hunt", "topic": "procedures",
+      "code": ["PROCEDURE max3(a, b, c) {", "  big ← a", "  IF (b > big) { big ← c }", "  IF (c > big) { big ← c }", "  RETURN(big)", "}"],
+      "buggyLine": 2,
+      "options": ["When b > big the assignment uses the wrong variable — should be big ← b", "Wrong return value", "a is never compared", "Missing parameter"],
+      "answer": 0,
+      "explanation": "Copy-paste mistake: when b is the new biggest, big should become b, not c. Result: max3(1, 99, 0) returns 0 instead of 99."
+    },
+
+    { "_section": "===== STEP 5: ITERATION (5) =====" },
+    {
+      "type": "multiple_choice", "topic": "iteration",
+      "question": "What does this code display?",
+      "code": "result ← 1\nFOR EACH n IN [1, 2, 3, 4] {\n  result ← result * n\n}\nDISPLAY(result)",
+      "options": ["10", "16", "20", "24"], "answer": 3,
+      "explanation": "Multiplicative accumulator: 1*1*2*3*4 = 24. This is the factorial pattern."
+    },
+    {
+      "type": "trace", "topic": "iteration",
+      "title": "Trace the swap",
+      "code": ["a ← 5", "b ← 9", "temp ← a", "a ← b", "b ← temp", "DISPLAY(a)", "DISPLAY(b)"],
+      "steps": [
+        { "line": 0, "vars": { "a": 5 } },
+        { "line": 1, "vars": { "a": 5, "b": 9 } },
+        { "line": 2, "vars": { "a": 5, "b": 9, "temp": 5 } },
+        { "line": 3, "vars": { "a": 9, "b": 9, "temp": 5 } },
+        { "line": 4, "vars": { "a": 9, "b": 5, "temp": 5 } },
+        { "line": 5, "vars": { "a": 9, "b": 5, "temp": 5 } },
+        { "line": 6, "vars": { "a": 9, "b": 5, "temp": 5 } }
+      ],
+      "question": "What is displayed?",
+      "options": ["5 9", "9 5", "5 5", "9 9"], "answer": 1,
+      "explanation": "Classic swap. Without temp, a ← b would clobber the original a. Final: a=9, b=5."
+    },
+    {
+      "type": "trace", "topic": "iteration",
+      "title": "Trace the count-down",
+      "code": ["i ← 6", "REPEAT UNTIL (i ≤ 0) {", "  i ← i - 2", "  DISPLAY(i)", "}"],
+      "steps": [
+        { "line": 0, "vars": { "i": 6 } },
+        { "line": 1, "vars": { "i": 6 } },
+        { "line": 2, "vars": { "i": 4 } },
+        { "line": 3, "vars": { "i": 4 } },
+        { "line": 1, "vars": { "i": 4 } },
+        { "line": 2, "vars": { "i": 2 } },
+        { "line": 3, "vars": { "i": 2 } },
+        { "line": 1, "vars": { "i": 2 } },
+        { "line": 2, "vars": { "i": 0 } },
+        { "line": 3, "vars": { "i": 0 } },
+        { "line": 1, "vars": { "i": 0 } }
+      ],
+      "question": "What is displayed?",
+      "options": ["6 4 2", "6 4 2 0", "4 2 0", "Loops forever"], "answer": 2,
+      "explanation": "i decrements before each display: 4, 2, 0. After 0 the condition i ≤ 0 holds → loop exits."
+    },
+    {
+      "type": "build_loop", "topic": "iteration",
+      "title": "Average of a list",
+      "description": "Order these blocks to compute and display the average of nums.",
+      "blocks": ["sum ← 0", "FOR EACH n IN nums {", "  sum ← sum + n", "}", "avg ← sum / LENGTH(nums)", "DISPLAY(avg)"],
+      "explanation": "Standard accumulate-then-divide. Watch out for empty lists — LENGTH would be 0 and you'd divide by zero."
+    },
+    {
+      "type": "build_loop", "topic": "iteration",
+      "title": "Reverse a list",
+      "description": "Order these blocks to display nums in reverse order.",
+      "blocks": ["reversed ← []", "FOR EACH n IN nums {", "  INSERT(reversed, 1, n)", "}", "DISPLAY(reversed)"],
+      "explanation": "Inserting at position 1 each iteration pushes existing items back, building the reverse."
+    },
+
+    { "_section": "===== STEP 5: DATA (5) =====" },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "Best abstraction for storing high temperatures every day for a year?",
+      "options": ["365 separate variables, one per day", "A 1D list of 365 numbers", "A 12×31 grid (with some unused cells)", "Either #2 or #3 works — pick by access pattern"],
+      "answer": 3,
+      "explanation": "Both work. Flat list = easy yearly stats. 2D = easy per-month stats. Choose based on what you'll do most."
+    },
+    {
+      "type": "trace", "topic": "data",
+      "title": "Parallel-list lookup",
+      "code": ["names  ← [\"Sam\", \"Lee\", \"Ava\"]", "ages   ← [12, 17, 14]", "target ← \"Lee\"", "result ← -1", "i ← 1", "REPEAT UNTIL (i > 3) {", "  IF (names[i] = target) { result ← ages[i] }", "  i ← i + 1", "}"],
+      "steps": [
+        { "line": 0, "vars": { "names": "[Sam,Lee,Ava]" } },
+        { "line": 1, "vars": { "names": "[Sam,Lee,Ava]", "ages": "[12,17,14]" } },
+        { "line": 2, "vars": { "names": "[Sam,Lee,Ava]", "ages": "[12,17,14]", "target": "Lee" } },
+        { "line": 3, "vars": { "names": "[Sam,Lee,Ava]", "ages": "[12,17,14]", "target": "Lee", "result": -1 } },
+        { "line": 4, "vars": { "names": "[Sam,Lee,Ava]", "ages": "[12,17,14]", "target": "Lee", "result": -1, "i": 1 } },
+        { "line": 6, "vars": { "result": -1, "i": 1 } },
+        { "line": 7, "vars": { "result": -1, "i": 2 } },
+        { "line": 6, "vars": { "result": -1, "i": 2 } },
+        { "line": 6, "vars": { "result": 17, "i": 2 } },
+        { "line": 7, "vars": { "result": 17, "i": 3 } },
+        { "line": 6, "vars": { "result": 17, "i": 3 } },
+        { "line": 7, "vars": { "result": 17, "i": 4 } }
+      ],
+      "question": "Final value of result?",
+      "options": ["12", "14", "17", "-1"], "answer": 2,
+      "explanation": "Loop finds 'Lee' at index 2, sets result = ages[2] = 17. The remaining iteration doesn't change anything."
+    },
+    {
+      "type": "trace", "topic": "data",
+      "title": "Walk a 2D grid",
+      "code": ["sum ← 0", "FOR EACH row IN [[1,2],[3,4]] {", "  FOR EACH cell IN row {", "    sum ← sum + cell", "  }", "}", "DISPLAY(sum)"],
+      "steps": [
+        { "line": 0, "vars": { "sum": 0 } },
+        { "line": 1, "vars": { "sum": 0, "row": "[1,2]" } },
+        { "line": 2, "vars": { "sum": 0, "row": "[1,2]", "cell": 1 } },
+        { "line": 3, "vars": { "sum": 1, "row": "[1,2]", "cell": 1 } },
+        { "line": 2, "vars": { "sum": 1, "row": "[1,2]", "cell": 2 } },
+        { "line": 3, "vars": { "sum": 3, "row": "[1,2]", "cell": 2 } },
+        { "line": 1, "vars": { "sum": 3, "row": "[3,4]" } },
+        { "line": 2, "vars": { "sum": 3, "row": "[3,4]", "cell": 3 } },
+        { "line": 3, "vars": { "sum": 6, "row": "[3,4]", "cell": 3 } },
+        { "line": 2, "vars": { "sum": 6, "row": "[3,4]", "cell": 4 } },
+        { "line": 3, "vars": { "sum": 10, "row": "[3,4]", "cell": 4 } },
+        { "line": 6, "vars": { "sum": 10 } }
+      ],
+      "question": "What is displayed?",
+      "options": ["4", "10", "20", "24"], "answer": 1,
+      "explanation": "Sum every cell of the 2D list: 1 + 2 + 3 + 4 = 10."
+    },
+    {
+      "type": "build_loop", "topic": "data",
+      "title": "Display every cell of a 2D grid",
+      "description": "Order these blocks to display every cell of grid (row by row).",
+      "blocks": ["FOR EACH row IN grid {", "  FOR EACH cell IN row {", "    DISPLAY(cell)", "  }", "}"],
+      "explanation": "Outer loop picks a row, inner loop walks that row's cells. Standard nested-loop walk."
+    },
+    {
+      "type": "match_pairs", "topic": "data",
+      "prompt": "Match each scenario to the best AP-style data structure.",
+      "left":   ["3×3 tic-tac-toe board", "List of 30 student GPAs", "Names AND ages of 30 students", "8 light switches (on/off)"],
+      "right":  ["1D list of numbers", "1D list of booleans", "2D list (3×3)", "Two parallel lists"],
+      "answer": [2, 0, 3, 1],
+      "explanation": "Grid → 2D list. GPAs (numbers) → 1D number list. Two related fields → parallel lists. On/off → booleans."
+    },
+
+    { "_section": "===== STEP 5: EFFICIENCY (4) =====" },
+    {
+      "type": "multiple_choice", "topic": "efficiency",
+      "question": "Which time complexity is reasonable to run on a list of 1 BILLION items?",
+      "options": ["O(n²) — quadratic", "O(2ⁿ) — exponential", "O(n) — linear", "O(n!) — factorial"],
+      "answer": 2,
+      "explanation": "Linear is reasonable (1B steps completes in seconds-to-minutes). Quadratic = 10¹⁸ steps = years. Exponential and factorial are unimaginable past trivial sizes."
+    },
+    {
+      "type": "multiple_choice", "topic": "efficiency",
+      "question": "Why might a heuristic be preferred over an exact algorithm?",
+      "options": ["Heuristics are always more accurate", "When the exact answer would take too long, a 'good enough' answer fast is more useful", "Heuristics use less memory", "Heuristics are required by the AP exam"],
+      "answer": 1,
+      "explanation": "GPS routing, recommender systems, scheduling — all use heuristics because exact optimum would take impractical time."
+    },
+    {
+      "type": "build_loop", "topic": "efficiency",
+      "title": "Build linear search",
+      "description": "Order these blocks to return the index of target in aList, or 0 if not found.",
+      "blocks": ["i ← 1", "REPEAT UNTIL (i > LENGTH(aList)) {", "  IF (aList[i] = target) {", "    RETURN(i)", "  }", "  i ← i + 1", "}", "RETURN(0)"],
+      "explanation": "Walk one item at a time. On match, return its index. After the loop, return 0 as the 'not found' sentinel."
+    },
+    {
+      "type": "match_pairs", "topic": "efficiency",
+      "prompt": "Match each search/sort method to a key property.",
+      "left":   ["Linear search", "Binary search", "Bubble sort", "Hash table lookup"],
+      "right":  ["Requires sorted input", "O(1) average lookup", "O(n²) typical time", "Works on any list"],
+      "answer": [3, 0, 2, 1],
+      "explanation": "Linear works on anything. Binary requires sorted. Bubble compares all pairs → quadratic. Hash maps directly to a bucket → constant time average."
+    },
+
+    { "_section": "===== STEP 5: DEBUGGING (5) =====" },
+    {
+      "type": "trace", "topic": "debugging",
+      "title": "Trace the loop boundary",
+      "code": ["sum ← 0", "i ← 1", "REPEAT UNTIL (i > 4) {", "  sum ← sum + i", "  i ← i + 1", "}", "DISPLAY(sum)"],
+      "steps": [
+        { "line": 0, "vars": { "sum": 0 } },
+        { "line": 1, "vars": { "sum": 0, "i": 1 } },
+        { "line": 2, "vars": { "sum": 0, "i": 1 } },
+        { "line": 3, "vars": { "sum": 1, "i": 1 } },
+        { "line": 4, "vars": { "sum": 1, "i": 2 } },
+        { "line": 3, "vars": { "sum": 3, "i": 2 } },
+        { "line": 4, "vars": { "sum": 3, "i": 3 } },
+        { "line": 3, "vars": { "sum": 6, "i": 3 } },
+        { "line": 4, "vars": { "sum": 6, "i": 4 } },
+        { "line": 3, "vars": { "sum": 10, "i": 4 } },
+        { "line": 4, "vars": { "sum": 10, "i": 5 } },
+        { "line": 6, "vars": { "sum": 10 } }
+      ],
+      "question": "Final value of sum?",
+      "options": ["6 (1+2+3)", "10 (1+2+3+4)", "15 (1+2+3+4+5)", "Loops forever"], "answer": 1,
+      "explanation": "REPEAT UNTIL i > 4 still executes the body when i = 4. So 1+2+3+4 = 10. A common off-by-one would use ≥ and miss the 4."
+    },
+    {
+      "type": "trace", "topic": "debugging",
+      "title": "Trace the broken exit",
+      "code": ["count ← 0", "i ← 0", "REPEAT UNTIL (i = 5) {", "  count ← count + 1", "  i ← i + 2", "}"],
+      "steps": [
+        { "line": 0, "vars": { "count": 0 } },
+        { "line": 1, "vars": { "count": 0, "i": 0 } },
+        { "line": 2, "vars": { "count": 0, "i": 0 } },
+        { "line": 3, "vars": { "count": 1, "i": 0 } },
+        { "line": 4, "vars": { "count": 1, "i": 2 } },
+        { "line": 3, "vars": { "count": 2, "i": 2 } },
+        { "line": 4, "vars": { "count": 2, "i": 4 } },
+        { "line": 3, "vars": { "count": 3, "i": 4 } },
+        { "line": 4, "vars": { "count": 3, "i": 6 } },
+        { "line": 3, "vars": { "count": 4, "i": 6 } },
+        { "line": 4, "vars": { "count": 4, "i": 8 } }
+      ],
+      "question": "What happens?",
+      "options": ["count = 5, then exits", "count = 3, then exits", "Loops forever — i never equals 5", "count = 2"],
+      "answer": 2,
+      "explanation": "i goes 0, 2, 4, 6, 8, ... never lands exactly on 5. Exit condition uses = instead of ≥, so the loop never terminates. Use ≥ for safety."
+    },
+    {
+      "type": "build_loop", "topic": "debugging",
+      "title": "Fix the all-positive check",
+      "description": "Order these blocks to correctly return true ONLY if every value in nums is positive.",
+      "blocks": ["FOR EACH n IN nums {", "  IF (n ≤ 0) {", "    RETURN(false)", "  }", "}", "RETURN(true)"],
+      "explanation": "Common bug: returning true on the FIRST positive. Correct pattern: return false on first failure, then true after the loop confirms all passed."
+    },
+    {
+      "type": "bug_hunt", "topic": "debugging",
+      "code": ["count ← 0", "FOR EACH n IN nums {", "  count + 1", "}", "DISPLAY(count)"],
+      "buggyLine": 2,
+      "options": ["Off-by-one error", "Should be count ← count + 1; the expression's result is computed and discarded", "Wrong loop type", "Missing parameter"],
+      "answer": 1,
+      "explanation": "count + 1 evaluates a number and throws it away. Need an assignment: count ← count + 1."
+    },
+    {
+      "type": "bug_hunt", "topic": "debugging",
+      "code": ["max ← nums[1]", "FOR EACH n IN nums {", "  IF (n > max) {", "    max ← n", "  }", "}", "DISPLAY(min)"],
+      "buggyLine": 6,
+      "options": ["Variable typo — DISPLAY(min) should be DISPLAY(max)", "Should start at 0 not nums[1]", "Loop should be REPEAT UNTIL", "Wrong comparison"],
+      "answer": 0,
+      "explanation": "Computes max correctly but then displays a never-defined variable 'min'. Probably copy-pasted from a min-finding routine."
+    },
+
+    { "_section": "===== STEP 5: BOOLEAN (4) =====" },
+    {
+      "type": "multiple_choice", "topic": "boolean",
+      "question": "When does (NOT a) OR b evaluate to FALSE?",
+      "options": ["When a is true and b is false", "When a is false and b is false", "When a is true and b is true", "When a is false and b is true"],
+      "answer": 0,
+      "explanation": "(NOT a) OR b is false only when both halves are false. NOT a = false means a = true. b = false. So a=true, b=false."
+    },
+    { "type": "boolean", "topic": "boolean", "expression": "(true OR false) AND false",      "answer": "false", "explanation": "Inside: true OR false = true. Then true AND false = false." },
+    { "type": "boolean", "topic": "boolean", "expression": "NOT(false) AND NOT(true)",        "answer": "false", "explanation": "Left: NOT(false) = true. Right: NOT(true) = false. true AND false = false." },
+    { "type": "boolean", "topic": "boolean", "expression": "(true AND true) OR (false AND true)", "answer": "true",  "explanation": "Left half: true. Right half: false. true OR false = true." },
+
+    { "_section": "===== STEP 5: BINARY (4) =====" },
+    {
+      "type": "multiple_choice", "topic": "binary",
+      "question": "Largest unsigned integer storable in 6 bits?",
+      "options": ["32", "63", "64", "128"], "answer": 1,
+      "explanation": "2⁶ = 64 distinct values, from 0 to 63. The MAX value is 63 = 111111."
+    },
+    { "type": "binary", "topic": "binary", "target": 75,  "explanation": "75 = 64 + 8 + 2 + 1 = 01001011." },
+    { "type": "binary", "topic": "binary", "target": 144, "explanation": "144 = 128 + 16 = 10010000." },
+    { "type": "binary", "topic": "binary", "target": 19,  "explanation": "19 = 16 + 2 + 1 = 00010011." },
+
+    { "_section": "===== STEP 5: INTERNET (4) =====" },
+    {
+      "type": "multiple_choice", "topic": "internet",
+      "question": "What uniquely identifies a device on a network?",
+      "options": ["Its domain name", "Its IP address", "Its browser", "Its operating system"],
+      "answer": 1,
+      "explanation": "Each device gets a unique IP. Domain names map to IPs via DNS — but the IP is what the network actually uses."
+    },
+    {
+      "type": "multiple_choice", "topic": "internet",
+      "question": "Why does packet switching make the Internet resilient?",
+      "options": ["Packets are encrypted by default", "If one route fails, packets take a different path automatically", "Packets are smaller than original files", "Packets compress data"],
+      "answer": 1,
+      "explanation": "Each packet is routed independently. A failed router doesn't kill the connection — packets reroute around it."
+    },
+    {
+      "type": "multiple_choice", "topic": "internet",
+      "question": "What does TCP guarantee that UDP does not?",
+      "options": ["Faster transmission", "Encryption", "Reliable, in-order delivery (lost packets are resent)", "A specific port number"],
+      "answer": 2,
+      "explanation": "TCP confirms delivery and re-sends missing packets in order. UDP is fire-and-forget — faster, useful for video/games where occasional loss beats waiting."
+    },
+    {
+      "type": "match_pairs", "topic": "internet",
+      "prompt": "Match each Internet protocol/service to its job.",
+      "left":   ["DNS", "HTTP", "TCP", "IP"],
+      "right":  ["Reliable, ordered packet delivery", "Translates names to addresses", "Routes packets between devices", "Carries web requests/responses"],
+      "answer": [1, 3, 0, 2],
+      "explanation": "DNS resolves names. HTTP is the web protocol. TCP makes packet streams reliable. IP routes packets. The classic stack."
+    },
+
+    { "_section": "===== STEP 5: MEDIA (3) =====" },
+    {
+      "type": "multiple_choice", "topic": "media",
+      "question": "Doubling each side of an image (e.g., 100×100 → 200×200, same color depth) multiplies storage by:",
+      "options": ["About the same", "Roughly 2×", "Roughly 4×", "Roughly 8×"], "answer": 2,
+      "explanation": "Doubling each dimension quadruples pixel count: 10,000 → 40,000 pixels. Storage scales with pixel count."
+    },
+    {
+      "type": "multiple_choice", "topic": "media",
+      "question": "What does 'lossless' compression guarantee?",
+      "options": ["Smaller files than lossy", "Decompressed output is bit-for-bit identical to the original", "No metadata is lost", "Faster decompression"],
+      "answer": 1,
+      "explanation": "Lossless = exactly reversible (ZIP, PNG, FLAC). Lossy (JPEG, MP3) discards data and can't perfectly reconstruct."
+    },
+    {
+      "type": "trace", "topic": "media",
+      "title": "Trace bright-pixel count",
+      "code": ["bright ← 0", "FOR EACH px IN [50, 220, 180, 240, 30] {", "  IF (px > 200) {", "    bright ← bright + 1", "  }", "}", "DISPLAY(bright)"],
+      "steps": [
+        { "line": 0, "vars": { "bright": 0 } },
+        { "line": 1, "vars": { "bright": 0, "px": 50 } },
+        { "line": 2, "vars": { "bright": 0, "px": 50 } },
+        { "line": 1, "vars": { "bright": 0, "px": 220 } },
+        { "line": 3, "vars": { "bright": 1, "px": 220 } },
+        { "line": 1, "vars": { "bright": 1, "px": 180 } },
+        { "line": 1, "vars": { "bright": 1, "px": 240 } },
+        { "line": 3, "vars": { "bright": 2, "px": 240 } },
+        { "line": 1, "vars": { "bright": 2, "px": 30 } },
+        { "line": 6, "vars": { "bright": 2 } }
+      ],
+      "question": "How many pixels exceed brightness 200?",
+      "options": ["1", "2", "3", "5"], "answer": 1,
+      "explanation": "220 and 240 exceed 200; 50, 180, 30 do not. Count = 2."
+    },
+
+    { "_section": "===== STEP 5: SECURITY (3) =====" },
+    {
+      "type": "multiple_choice", "topic": "security",
+      "question": "Why should you NEVER reuse the same password across multiple sites?",
+      "options": ["Reuse violates password policies", "If one site's database is breached, attackers try the same password on banking, email, etc. (credential stuffing)", "Passwords expire faster when reused", "Browsers refuse reused passwords"],
+      "answer": 1,
+      "explanation": "Credential stuffing is the #1 source of account takeovers today. A unique password per site contains the damage when (not if) one site leaks."
+    },
+    {
+      "type": "multiple_choice", "topic": "security",
+      "question": "What's the difference between encryption and a digital signature?",
+      "options": ["No real difference — both protect data", "Encryption keeps a message secret; a signature proves WHO sent it and that it wasn't altered", "Signatures are faster", "Encryption requires the Internet"],
+      "answer": 1,
+      "explanation": "Different goals: encryption = confidentiality (keep contents secret); signatures = authenticity + integrity (prove sender, detect tampering). Both use keys but in different roles."
+    },
+    {
+      "type": "multiple_choice", "topic": "security",
+      "question": "A scam website using HTTPS is:",
+      "options": ["Safe — HTTPS guarantees safety", "Still dangerous — HTTPS encrypts the channel but says nothing about the site's intent", "Impossible to set up", "Automatically blocked by browsers"],
+      "answer": 1,
+      "explanation": "HTTPS protects you from someone snooping in the middle. It does not vouch for the site's honesty. Phishing sites use HTTPS too."
+    },
+
+    { "_section": "===== STEP 5: IMPACT (3) =====" },
+    {
+      "type": "multiple_choice", "topic": "impact",
+      "question": "An algorithm trained primarily on data from one demographic is most likely to:",
+      "options": ["Run faster on that demographic", "Perform worse on under-represented demographics due to algorithmic bias", "Use less memory", "Be more accurate overall"],
+      "answer": 1,
+      "explanation": "Famous example: facial recognition systems trained mostly on light-skinned subjects had much higher error rates on dark-skinned subjects. Training data shapes outcomes."
+    },
+    {
+      "type": "multiple_choice", "topic": "impact",
+      "question": "Which is a real benefit of open-source software?",
+      "options": ["You don't have to follow any license terms", "Anyone can read the code, find security holes, and contribute fixes", "It's always faster than proprietary software", "It doesn't need testing"],
+      "answer": 1,
+      "explanation": "'Many eyes' on the code helps catch bugs and security issues. Open-source IS licensed (MIT, GPL, Apache, etc.) — the source is just freely viewable and modifiable under those terms."
+    },
+    {
+      "type": "multiple_choice", "topic": "impact",
+      "question": "Third-party tracking cookies that follow you across many sites are mainly used to:",
+      "options": ["Speed up page loads", "Build a profile of your interests for targeted advertising", "Encrypt your data", "Block ads"],
+      "answer": 1,
+      "explanation": "Cross-site tracking links your activity into an ad profile. Modern Safari and Firefox block these cookies by default; Chrome is gradually doing the same."
     }
   ]
 }

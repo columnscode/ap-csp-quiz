@@ -66,9 +66,31 @@ export default function ResultScreen({ answers, onRestart, onHome }) {
     } else if (q.type === "bug_hunt") {
       yourAnswer = `Line ${m.picked.line}, ${LETTERS[m.picked.type] ?? "?"}`;
       correctAnswer = `Line ${q.buggyLine}, ${LETTERS[q.answer]}: ${q.options[q.answer]}`;
-    } else if (q.type === "build_loop") {
-      yourAnswer = "Wrong order";
-      correctAnswer = "See blocks above";
+    } else if (q.type === "build_loop" || q.type === "order_steps") {
+      const userOrder = m.picked?.order ?? [];
+      const items = q.blocks ?? q.items ?? [];
+      const correctRight = q.blocks ? "(in correct order above)" : items.join(" → ");
+      yourAnswer = userOrder.map((origIdx) => items[origIdx]).join(" → ") || "(no order)";
+      correctAnswer = correctRight;
+    } else if (q.type === "match_pairs") {
+      const p = m.picked?.pairs ?? {};
+      yourAnswer = q.left
+        .map((l, i) => `${l} → ${p[i] != null ? q.right[p[i]] : "(none)"}`)
+        .join("; ");
+      correctAnswer = q.left
+        .map((l, i) => `${l} → ${q.right[q.answer[i]]}`)
+        .join("; ");
+    } else if (q.type === "fill_in_blank") {
+      const picks = m.picked?.picked ?? [];
+      yourAnswer = q.blanks
+        .map((b, i) => `[${i + 1}] ${picks[i] != null ? b.options[picks[i]] : "(none)"}`)
+        .join("  ");
+      correctAnswer = q.blanks
+        .map((b, i) => `[${i + 1}] ${b.options[b.answer]}`)
+        .join("  ");
+    } else if (q.type === "click_to_locate_bug") {
+      yourAnswer = `Line ${m.picked?.line ?? "?"}`;
+      correctAnswer = `Line ${q.buggyLine}: ${q.code[q.buggyLine]?.trim()}`;
     }
     return { yourAnswer, correctAnswer };
   }

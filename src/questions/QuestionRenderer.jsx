@@ -5,6 +5,10 @@ import BinaryQ from "./BinaryQ.jsx";
 import BugHuntQ from "./BugHuntQ.jsx";
 import TraceQ from "./TraceQ.jsx";
 import BuildLoopQ from "./BuildLoopQ.jsx";
+import MatchPairsQ from "./MatchPairsQ.jsx";
+import FillInBlankQ from "./FillInBlankQ.jsx";
+import ClickToLocateBugQ from "./ClickToLocateBugQ.jsx";
+import OrderStepsQ from "./OrderStepsQ.jsx";
 
 /**
  * Routes a question to the right type-specific renderer.
@@ -19,12 +23,16 @@ import BuildLoopQ from "./BuildLoopQ.jsx";
 export default function QuestionRenderer({ q, locked, picked, onAnswer }) {
   const props = { q, locked, picked, onPick: onAnswer, onSubmit: onAnswer };
   switch (q.type) {
-    case "multiple_choice": return <MultipleChoiceQ {...props} />;
-    case "boolean":         return <BooleanQ {...props} />;
-    case "binary":          return <BinaryQ {...props} />;
-    case "bug_hunt":        return <BugHuntQ {...props} />;
-    case "trace":           return <TraceQ {...props} />;
-    case "build_loop":      return <BuildLoopQ {...props} />;
+    case "multiple_choice":     return <MultipleChoiceQ {...props} />;
+    case "boolean":             return <BooleanQ {...props} />;
+    case "binary":              return <BinaryQ {...props} />;
+    case "bug_hunt":            return <BugHuntQ {...props} />;
+    case "trace":               return <TraceQ {...props} />;
+    case "build_loop":          return <BuildLoopQ {...props} />;
+    case "match_pairs":         return <MatchPairsQ {...props} />;
+    case "fill_in_blank":       return <FillInBlankQ {...props} />;
+    case "click_to_locate_bug": return <ClickToLocateBugQ {...props} />;
+    case "order_steps":         return <OrderStepsQ {...props} />;
     default:
       return <div>Unknown question type: {q.type}</div>;
   }

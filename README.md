@@ -92,6 +92,10 @@ dev server will hot-reload.
 | `bug_hunt` | Identifying and naming bugs | Debugging topic |
 | `boolean` | Truth-table evaluation under operator precedence | Boolean topic |
 | `build_loop` | Recognizing common code patterns | Iteration, procedures |
+| `match_pairs` | 1:1 mappings (term ↔ definition, algorithm ↔ Big-O) | Concept consolidation |
+| `fill_in_blank` | Precise syntax recall | Operators, function calls, accumulator patterns |
+| `click_to_locate_bug` | Quick bug-spotting | Debugging when category isn't the point |
+| `order_steps` | Sequencing concepts | Sorting Big-O, ordering algorithm steps |
 
 ## Distribution
 

@@ -94,7 +94,7 @@ export default function HomeScreen({ onStart }) {
       </div>
 
       <div style={{ marginTop: 36, textAlign: "center", color: "var(--ink-mute)", fontSize: "0.78rem" }}>
-        6 question types: multiple choice · trace · binary · bug hunt · boolean · build loop
+        10 question types: multiple choice · trace · binary · bug hunt · boolean · build loop · match pairs · fill in blank · spot the bug · order steps
       </div>
 
       {showProgress && <ProgressModal onClose={() => setShowProgress(false)} />}

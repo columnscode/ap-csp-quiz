@@ -116,6 +116,76 @@ questions.forEach((q, i) => {
         warn(i, `${q.blocks.length} blocks — keep under ~8 for usability`);
       break;
 
+    case "match_pairs": {
+      if (!q.prompt || typeof q.prompt !== "string") err(i, "missing 'prompt'", q);
+      if (!Array.isArray(q.left) || q.left.length < 2)
+        err(i, "'left' must be array of 2+ strings", q);
+      if (!Array.isArray(q.right) || q.right.length !== q.left?.length)
+        err(i, "'right' must be the same length as 'left'", q);
+      if (!Array.isArray(q.answer) || q.answer.length !== q.left?.length)
+        err(i, "'answer' must be an array same length as 'left'", q);
+      else {
+        const seen = new Set();
+        q.answer.forEach((v, ai) => {
+          if (typeof v !== "number" || v < 0 || v >= (q.right?.length ?? 0))
+            err(i, `answer[${ai}] out of range`, q);
+          if (seen.has(v)) err(i, `answer[${ai}]=${v} appears twice (mapping must be one-to-one)`, q);
+          seen.add(v);
+        });
+      }
+      if (q.left && q.left.length > 6)
+        warn(i, `${q.left.length} pairs — keep <= 5 for usability`);
+      break;
+    }
+
+    case "fill_in_blank": {
+      if (!q.question || typeof q.question !== "string") err(i, "missing 'question'", q);
+      if (!Array.isArray(q.code)) err(i, "'code' must be an array of strings", q);
+      if (!Array.isArray(q.blanks) || q.blanks.length === 0)
+        err(i, "'blanks' must be a non-empty array", q);
+      else {
+        q.blanks.forEach((b, bi) => {
+          if (!Array.isArray(b.options) || b.options.length !== 4)
+            err(i, `blank ${bi}: 'options' must be 4 strings`, q);
+          if (typeof b.answer !== "number" || b.answer < 0 || b.answer > 3)
+            err(i, `blank ${bi}: 'answer' must be 0..3`, q);
+        });
+        // Every {{N}} in the code must map to an existing blank, and every
+        // blank must be referenced at least once.
+        const codeStr = (q.code || []).join("\n");
+        const refs = new Set();
+        for (const m of codeStr.matchAll(/\{\{(\d+)\}\}/g)) {
+          const idx = Number(m[1]);
+          refs.add(idx);
+          if (idx < 0 || idx >= q.blanks.length)
+            err(i, `code references {{${idx}}} but no such blank`, q);
+        }
+        q.blanks.forEach((_, bi) => {
+          if (!refs.has(bi))
+            err(i, `blank ${bi} is defined but never referenced as {{${bi}}} in code`, q);
+        });
+      }
+      break;
+    }
+
+    case "click_to_locate_bug":
+      if (!Array.isArray(q.code) || q.code.length < 2)
+        err(i, "'code' must be array of 2+ strings", q);
+      if (typeof q.buggyLine !== "number")
+        err(i, "'buggyLine' must be a number", q);
+      else if (q.buggyLine < 0 || q.buggyLine >= (q.code?.length ?? 0))
+        err(i, `buggyLine ${q.buggyLine} out of bounds (code has ${q.code?.length} lines)`, q);
+      break;
+
+    case "order_steps":
+      if (!q.title) err(i, "missing 'title'", q);
+      if (!q.description) err(i, "missing 'description'", q);
+      if (!Array.isArray(q.items) || q.items.length < 3)
+        err(i, "'items' must be array of 3+ strings", q);
+      if (q.items && q.items.length > 8)
+        warn(i, `${q.items.length} items — keep <= 8 for usability`);
+      break;
+
     default:
       err(i, `unknown type '${q.type}'`, q);
   }
