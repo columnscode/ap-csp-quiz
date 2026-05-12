@@ -1895,6 +1895,517 @@
       "options": ["To make results harder to verify", "Real-world systems involve chance; running the simulation many times with random inputs explores the range of possible outcomes", "Random numbers are required by AP exam rules", "Without randomness, the program crashes"],
       "answer": 1,
       "explanation": "A single simulation run with fixed inputs gives one answer. Repeated runs with random variation (Monte Carlo methods) reveal the distribution — 'in 80% of runs, the disease dies out by week 8' is more useful than one trajectory."
+    },
+
+    { "_section": "Mixed practice — 5 per topic across all 11 topics" },
+
+    {
+      "type": "trace", "topic": "procedures",
+      "title": "Trace adjust(4, 9)",
+      "code": [
+        "PROCEDURE adjust(x, y) {",
+        "  IF (x > y) { RETURN(x - y) }",
+        "  ELSE       { RETURN(y - x) }",
+        "}",
+        "result ← adjust(4, 9)",
+        "DISPLAY(result)"
+      ],
+      "steps": [
+        { "line": 4, "vars": { "x": 4, "y": 9 } },
+        { "line": 1, "vars": { "x": 4, "y": 9 } },
+        { "line": 2, "vars": { "x": 4, "y": 9, "adjust(4,9)": 5 } },
+        { "line": 4, "vars": { "result": 5 } },
+        { "line": 5, "vars": { "result": 5 } }
+      ],
+      "question": "What value is displayed?",
+      "options": ["-5", "4", "5", "9"],
+      "answer": 2,
+      "explanation": "4 > 9 is false, so the ELSE branch runs: y - x = 9 - 4 = 5."
+    },
+    {
+      "type": "build_loop", "topic": "procedures",
+      "title": "Build: average of a list",
+      "description": "Order these blocks to define a procedure that returns the average of the values in nums.",
+      "blocks": [
+        "PROCEDURE average(nums) {",
+        "  total ← 0",
+        "  FOR EACH n IN nums {",
+        "    total ← total + n",
+        "  }",
+        "  RETURN(total / LENGTH(nums))",
+        "}"
+      ],
+      "explanation": "Initialize an accumulator, sum every element, then return sum ÷ count. The RETURN must sit OUTSIDE the loop or the procedure exits after one element."
+    },
+    {
+      "type": "fill_in_blank", "topic": "procedures",
+      "question": "Complete the procedure so it returns triple its input.",
+      "code": [
+        "PROCEDURE triple({{0}}) {",
+        "  RETURN({{1}})",
+        "}",
+        "DISPLAY(triple(5))"
+      ],
+      "blanks": [
+        { "options": ["x", "5", "triple", "RETURN"], "answer": 0 },
+        { "options": ["3", "x * 3", "5 * 3", "x"], "answer": 1 }
+      ],
+      "explanation": "The parameter declares the input variable name (x). The body should multiply that VARIABLE by 3 — that way triple(5) gives 15, but triple(7) also works."
+    },
+    {
+      "type": "multiple_choice", "topic": "procedures",
+      "question": "A team has the same email-validation logic copy-pasted in 12 places. They refactor into one procedure isValidEmail(s). What is the BIGGEST benefit?",
+      "options": ["The code now runs 12× faster", "If the validation rule changes, fixing it once updates all 12 call sites", "The procedure takes less memory than 12 copies", "It removes the need for testing"],
+      "answer": 1,
+      "explanation": "Procedural abstraction's win is maintainability, not speed. Twelve copies meant twelve places to fix when (not if) the rule changes."
+    },
+    {
+      "type": "multiple_choice", "topic": "procedures",
+      "question": "What's the key difference between RETURN(x) and DISPLAY(x) inside a procedure?",
+      "options": ["They are interchangeable", "RETURN sends x back to the caller as a usable value; DISPLAY only shows x on screen and doesn't help the caller compute anything", "DISPLAY ends the procedure; RETURN does not", "RETURN only works for numbers"],
+      "answer": 1,
+      "explanation": "DISPLAY is a side effect — useful for the user, useless to other code. RETURN feeds the value back so y ← square(5) works. Confusing them is a common exam trap."
+    },
+
+    {
+      "type": "trace", "topic": "iteration",
+      "title": "Count positives",
+      "code": [
+        "count ← 0",
+        "FOR EACH n IN [-2, 4, 0, 5, -1, 3] {",
+        "  IF (n > 0) {",
+        "    count ← count + 1",
+        "  }",
+        "}",
+        "DISPLAY(count)"
+      ],
+      "steps": [
+        { "line": 0, "vars": { "count": 0 } },
+        { "line": 1, "vars": { "count": 0, "n": -2 } },
+        { "line": 1, "vars": { "count": 0, "n": 4 } },
+        { "line": 3, "vars": { "count": 1, "n": 4 } },
+        { "line": 1, "vars": { "count": 1, "n": 0 } },
+        { "line": 1, "vars": { "count": 1, "n": 5 } },
+        { "line": 3, "vars": { "count": 2, "n": 5 } },
+        { "line": 1, "vars": { "count": 2, "n": -1 } },
+        { "line": 1, "vars": { "count": 2, "n": 3 } },
+        { "line": 3, "vars": { "count": 3, "n": 3 } },
+        { "line": 6, "vars": { "count": 3 } }
+      ],
+      "question": "What value is displayed?",
+      "options": ["2", "3", "4", "6"],
+      "answer": 1,
+      "explanation": "Three positives in the list: 4, 5, 3. Zero is not positive."
+    },
+    {
+      "type": "build_loop", "topic": "iteration",
+      "title": "Find the maximum",
+      "description": "Order these blocks so the program ends with the largest value in nums stored in best.",
+      "blocks": [
+        "best ← nums[1]",
+        "FOR EACH n IN nums {",
+        "  IF (n > best) {",
+        "    best ← n",
+        "  }",
+        "}",
+        "DISPLAY(best)"
+      ],
+      "explanation": "Seed the candidate with the first element, then compare each value. Initializing best to 0 would break for all-negative lists."
+    },
+    {
+      "type": "fill_in_blank", "topic": "iteration",
+      "question": "Complete the code so it counts how many times target appears in nums.",
+      "code": [
+        "count ← {{0}}",
+        "FOR EACH n IN nums {",
+        "  IF (n {{1}} target) {",
+        "    count ← count + 1",
+        "  }",
+        "}",
+        "DISPLAY(count)"
+      ],
+      "blanks": [
+        { "options": ["0", "1", "target", "nums"], "answer": 0 },
+        { "options": ["=", ">", "<", "≠"], "answer": 0 }
+      ],
+      "explanation": "Start the counter at 0. Increment only when the current element equals the target."
+    },
+    {
+      "type": "multiple_choice", "topic": "iteration",
+      "question": "When should you prefer REPEAT N TIMES over REPEAT UNTIL?",
+      "options": ["Always — REPEAT UNTIL is deprecated", "When you know in advance EXACTLY how many iterations you need", "Only when N is greater than 100", "When the loop body modifies a list"],
+      "answer": 1,
+      "explanation": "REPEAT N TIMES = known count. REPEAT UNTIL (condition) = unknown count, stop when something becomes true. Picking the wrong one is a common AP exam trap."
+    },
+    {
+      "type": "multiple_choice", "topic": "iteration",
+      "question": "AP pseudocode uses 1-based list indexing. To visit EVERY element of a list of length n with an indexed loop, the index should run from:",
+      "options": ["0 to n - 1", "1 to n", "1 to n - 1", "0 to n"],
+      "answer": 1,
+      "explanation": "AP pseudocode: first element is list[1], last is list[n]. Many real languages use 0 to n-1, but the AP exam uses 1 to n."
+    },
+
+    {
+      "type": "trace", "topic": "data",
+      "title": "Walk a 2D list",
+      "code": [
+        "grid ← [ [1, 2, 3], [4, 5, 6], [7, 8, 9] ]",
+        "sum ← 0",
+        "FOR EACH row IN grid {",
+        "  sum ← sum + row[2]",
+        "}",
+        "DISPLAY(sum)"
+      ],
+      "steps": [
+        { "line": 1, "vars": { "sum": 0 } },
+        { "line": 2, "vars": { "sum": 0, "row": "[1, 2, 3]" } },
+        { "line": 3, "vars": { "sum": 2, "row": "[1, 2, 3]" } },
+        { "line": 2, "vars": { "sum": 2, "row": "[4, 5, 6]" } },
+        { "line": 3, "vars": { "sum": 7, "row": "[4, 5, 6]" } },
+        { "line": 2, "vars": { "sum": 7, "row": "[7, 8, 9]" } },
+        { "line": 3, "vars": { "sum": 15, "row": "[7, 8, 9]" } },
+        { "line": 5, "vars": { "sum": 15 } }
+      ],
+      "question": "What value is displayed?",
+      "options": ["6", "12", "15", "18"],
+      "answer": 2,
+      "explanation": "row[2] is the SECOND element of each row in AP pseudocode (1-indexed). Second column: 2 + 5 + 8 = 15."
+    },
+    {
+      "type": "match_pairs", "topic": "data",
+      "prompt": "Match each scenario to the BEST data abstraction.",
+      "left":   ["Tic-tac-toe board", "200 friend names", "Student name + GPA", "50 yes/no answers"],
+      "right":  ["List of booleans", "1D list of strings", "Object with named fields", "2D list (3×3)"],
+      "answer": [3, 1, 2, 0],
+      "explanation": "Grid → 2D list. Many similar items → 1D list. Heterogeneous fields → object. Repeated yes/no → list of booleans."
+    },
+    {
+      "type": "build_loop", "topic": "data",
+      "title": "Build a filter",
+      "description": "Order these blocks so adults ends up containing every value from ages that is at least 18.",
+      "blocks": [
+        "adults ← []",
+        "FOR EACH a IN ages {",
+        "  IF (a ≥ 18) {",
+        "    APPEND(adults, a)",
+        "  }",
+        "}",
+        "DISPLAY(adults)"
+      ],
+      "explanation": "Filter pattern: start with an empty list, walk the input, append only items that pass the test."
+    },
+    {
+      "type": "fill_in_blank", "topic": "data",
+      "question": "Complete the code so highCount ends up as the number of scores at or above 90.",
+      "code": [
+        "highCount ← 0",
+        "FOR EACH s IN scores {",
+        "  IF (s {{0}} 90) {",
+        "    highCount ← {{1}}",
+        "  }",
+        "}"
+      ],
+      "blanks": [
+        { "options": ["≥", "=", "<", "≠"], "answer": 0 },
+        { "options": ["s", "highCount + 1", "highCount + s", "90"], "answer": 1 }
+      ],
+      "explanation": "Filter with ≥, then increment a counter (not the score itself) by 1 per match."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "A program tracks students. You can store data as parallel lists (names[i], grades[i], gpas[i]) OR as a single list of records. Why are parallel lists RISKIER?",
+      "options": ["Parallel lists run slower than records", "If one list is sorted or filtered without the others, the indexing breaks and a student gets wrong attributes", "Parallel lists can't store strings", "Records are illegal in pseudocode"],
+      "answer": 1,
+      "explanation": "Parallel lists rely on every list staying in lock-step. One careless sort and student #5's name lines up with someone else's GPA. Records bind fields together so they can't drift apart."
+    },
+
+    {
+      "type": "order_steps", "topic": "efficiency",
+      "title": "Binary search steps",
+      "description": "Order the steps performed by binary search when looking up a target in a SORTED list.",
+      "items": [
+        "Look at the middle element of the current range",
+        "Compare it to the target",
+        "If equal, return its index",
+        "If target is smaller, repeat on the left half; otherwise repeat on the right half",
+        "If the range becomes empty, report not found"
+      ],
+      "explanation": "Binary search halves the search range each step. That's why it's O(log n) — doubling n only adds one comparison."
+    },
+    {
+      "type": "match_pairs", "topic": "efficiency",
+      "prompt": "Match each problem to the most appropriate strategy.",
+      "left":   ["Find a name in a sorted phone book", "Fastest route through 30 cities", "Largest value in an unsorted list", "Does any program halt on any input?"],
+      "right":  ["Heuristic (approximate)", "Linear scan", "Impossible — undecidable", "Binary search"],
+      "answer": [3, 0, 1, 2],
+      "explanation": "Sorted lookup → binary search. Combinatorial route → heuristic (TSP is intractable at scale). Unsorted scan → linear. Halting problem → undecidable."
+    },
+    {
+      "type": "multiple_choice", "topic": "efficiency",
+      "question": "An algorithm runs in 2^n steps. If n=10 takes 1 second, roughly how long does n=30 take?",
+      "options": ["3 seconds", "30 seconds", "About 1 million seconds (~12 days)", "Same — 1 second"],
+      "answer": 2,
+      "explanation": "Doubling 20 more times → 2^20 ≈ 1,000,000× slower. Exponential growth is why brute-force password cracking and worst-case traveling-salesman blow up so fast."
+    },
+    {
+      "type": "multiple_choice", "topic": "efficiency",
+      "question": "A delivery company has 500 stops to plan TODAY. Finding the absolute shortest route would take a supercomputer years. Why is a heuristic acceptable?",
+      "options": ["Heuristics always find the optimum", "A near-optimal route delivered today is far more valuable than the perfect route delivered next year", "Heuristics use less memory and that's the bottleneck", "The exam requires heuristics"],
+      "answer": 1,
+      "explanation": "Real business value comes from 'good enough, on time'. GPS routing, search ranking, ad targeting — all intentionally approximate because exact answers are infeasible at scale."
+    },
+    {
+      "type": "multiple_choice", "topic": "efficiency",
+      "question": "Algorithm A is O(n), Algorithm B is O(n²). Both solve the same problem. For very large n, which statement is TRUE?",
+      "options": ["B is faster because it does more work", "A scales much better; doubling n roughly doubles A's time but quadruples B's time", "They run at the same speed for any input", "B is preferred because it's more thorough"],
+      "answer": 1,
+      "explanation": "O(n) is linear: 2× input → 2× time. O(n²) is quadratic: 2× input → 4× time. For n = 1,000,000, B is roughly 1,000,000× slower than A."
+    },
+
+    {
+      "type": "bug_hunt", "topic": "debugging",
+      "code": [
+        "PROCEDURE average(nums) {",
+        "  total ← 0",
+        "  i ← 1",
+        "  REPEAT UNTIL (i > LENGTH(nums)) {",
+        "    total ← total + nums[i]",
+        "    i ← i + 1",
+        "  }",
+        "  RETURN(total / LENGTH(nums) - 1)",
+        "}"
+      ],
+      "buggyLine": 7,
+      "options": ["Off-by-one in the loop", "Operator precedence: '/ LENGTH - 1' divides first, then subtracts 1 — missing parentheses give the wrong average", "Missing return", "Infinite loop"],
+      "answer": 1,
+      "explanation": "Should be RETURN(total / LENGTH(nums)). The '- 1' is leftover from someone confusing index ranges with the divisor. Classic copy-paste-then-edit slip."
+    },
+    {
+      "type": "click_to_locate_bug", "topic": "debugging",
+      "code": [
+        "PROCEDURE hasNegative(nums) {",
+        "  FOR EACH n IN nums {",
+        "    IF (n < 0) {",
+        "      RETURN(true)",
+        "    }",
+        "    RETURN(false)",
+        "  }",
+        "}"
+      ],
+      "buggyLine": 5,
+      "explanation": "RETURN(false) is INSIDE the loop, so the function exits after checking only the first element. Move it OUTSIDE the loop — it should run only if no negatives were found."
+    },
+    {
+      "type": "multiple_choice", "topic": "debugging",
+      "question": "A program works on [3, 5, 8] and [10, 12, 14] but produces wrong output on the empty list []. What's the BEST next step?",
+      "options": ["Mark the program done — empty lists are unusual", "Trace the code by hand with [] and add a guard or fix the logic where it breaks", "Add random print statements everywhere", "Rewrite the program from scratch"],
+      "answer": 1,
+      "explanation": "Empty lists, single-element lists, and 'null' values are classic edge cases the exam expects you to recognize. Pinpoint where the failure happens, fix that specific case."
+    },
+    {
+      "type": "bug_hunt", "topic": "debugging",
+      "code": [
+        "PROCEDURE allPass(scores) {",
+        "  FOR EACH s IN scores {",
+        "    IF (s < 60) {",
+        "      RETURN(true)",
+        "    }",
+        "  }",
+        "  RETURN(false)",
+        "}"
+      ],
+      "buggyLine": 3,
+      "options": ["Off-by-one", "Logic inverted: returns TRUE when a failing score is found; the procedure name promises the opposite", "Missing return", "Infinite loop"],
+      "answer": 1,
+      "explanation": "Either flip the comparison and swap the return values, or rename the procedure. As written, allPass([100, 95, 90]) would return false. Names lying to readers is one of the worst bug categories."
+    },
+    {
+      "type": "multiple_choice", "topic": "debugging",
+      "question": "You're testing a function that grades scores 0–100 into letter grades. Which set of test cases is BEST?",
+      "options": ["One input from the middle of each range", "Boundary values like 0, 59, 60, 69, 70, 79, 80, 89, 90, 100 — plus out-of-range values like -5 and 105", "Only valid grades from A and B", "Random numbers between 0 and 100"],
+      "answer": 1,
+      "explanation": "Bugs hide at boundaries (off-by-one between B and C, etc.) and on out-of-range input. Random sampling rarely hits them; deliberate boundary testing does."
+    },
+
+    { "type": "boolean", "topic": "boolean", "expression": "(NOT(false) OR true) AND false", "answer": "false", "explanation": "Inside parens: NOT(false) = true, then true OR true = true. Then true AND false = false." },
+    { "type": "boolean", "topic": "boolean", "expression": "NOT(true AND NOT(false))", "answer": "false", "explanation": "Innermost: NOT(false) = true. Then true AND true = true. Outer NOT(true) = false." },
+    { "type": "boolean", "topic": "boolean", "expression": "(false OR false) OR NOT(false)", "answer": "true", "explanation": "Left: false OR false = false. Right: NOT(false) = true. false OR true = true." },
+    {
+      "type": "multiple_choice", "topic": "boolean",
+      "question": "Which expression is EQUIVALENT to NOT(A AND B)?",
+      "options": ["NOT(A) AND NOT(B)", "NOT(A) OR NOT(B)", "A OR B", "A AND NOT(B)"],
+      "answer": 1,
+      "explanation": "De Morgan's Law: NOT(A AND B) = NOT(A) OR NOT(B). 'Not both' = 'at least one isn't'. Frequently tested on the AP exam in disguise."
+    },
+    {
+      "type": "multiple_choice", "topic": "boolean",
+      "question": "The condition (x > 10) AND (x > 5) can be simplified to:",
+      "options": ["x > 10", "x > 5", "x = 10", "Cannot be simplified"],
+      "answer": 0,
+      "explanation": "If x > 10, then x > 5 is automatic. The stricter condition wins — any x that passes both must already exceed 10."
+    },
+
+    { "type": "binary", "topic": "binary", "target": 167, "explanation": "167 = 128 + 32 + 4 + 2 + 1 = 10100111." },
+    { "type": "binary", "topic": "binary", "target": 90, "explanation": "90 = 64 + 16 + 8 + 2 = 01011010." },
+    { "type": "binary", "topic": "binary", "target": 51, "explanation": "51 = 32 + 16 + 2 + 1 = 00110011." },
+    {
+      "type": "multiple_choice", "topic": "binary",
+      "question": "How many distinct values can be represented with 10 bits?",
+      "options": ["10", "100", "512", "1024"],
+      "answer": 3,
+      "explanation": "n bits → 2^n combinations. 2^10 = 1024. Each added bit DOUBLES the range — and the overflow risk."
+    },
+    {
+      "type": "multiple_choice", "topic": "binary",
+      "question": "An 8-bit counter holds the value 255. The program adds 1. What is the MOST LIKELY result?",
+      "options": ["256", "Overflow — the counter wraps to 0 or signals an error, because 8 bits max out at 255", "Nothing — adding fails silently", "The number becomes 11111110"],
+      "answer": 1,
+      "explanation": "8 bits → max unsigned value 255 (11111111). +1 needs a 9th bit. Either the result wraps to 0 or an overflow error is reported, depending on the language."
+    },
+
+    {
+      "type": "match_pairs", "topic": "internet",
+      "prompt": "Match each Internet term to its role.",
+      "left":   ["IP address", "Domain name", "Packet", "Router"],
+      "right":  ["A device that forwards packets between networks", "A small chunk of a larger message, sent independently", "A human-readable label (example.com) for an IP", "A numeric address identifying a device on the network"],
+      "answer": [3, 2, 1, 0],
+      "explanation": "IP = numeric address. Domain = name. Packet = chunk. Router = forwarder. The classic four-piece quiz the AP exam loves."
+    },
+    {
+      "type": "multiple_choice", "topic": "internet",
+      "question": "What does HTTPS provide that HTTP does NOT?",
+      "options": ["Faster page loads", "Encryption of data in transit AND verification that the server owns the claimed domain", "Free hosting", "Backups of every page"],
+      "answer": 1,
+      "explanation": "HTTPS = HTTP + TLS. TLS encrypts so eavesdroppers can't read your traffic, and the certificate proves the server is who it claims to be."
+    },
+    {
+      "type": "multiple_choice", "topic": "internet",
+      "question": "The Internet has been migrating from IPv4 (32-bit addresses) to IPv6 (128-bit addresses). What is the main reason?",
+      "options": ["IPv6 packets travel faster", "IPv4 only allows about 4 billion addresses — not enough for every device on Earth", "IPv6 is more secure than IPv4", "IPv4 uses too much electricity"],
+      "answer": 1,
+      "explanation": "2^32 ≈ 4 billion addresses ran out as phones, cars, sensors, and appliances joined the Internet. 2^128 addresses (IPv6) — a vastly larger space — solves that."
+    },
+    {
+      "type": "multiple_choice", "topic": "internet",
+      "question": "Internet protocols (TCP/IP, HTTP, DNS) are 'open standards'. Why is that important?",
+      "options": ["Anyone can read and implement them, which is why devices from different vendors interoperate", "Open standards are required by law", "Open means free of charge only after paying a license", "Open standards run faster than closed ones"],
+      "answer": 0,
+      "explanation": "Open standards = published, royalty-free, vendor-neutral. The reason your iPhone can talk to a Windows server through a Cisco router. The Internet's scale depends on this."
+    },
+    {
+      "type": "multiple_choice", "topic": "internet",
+      "question": "Bandwidth and latency are different measures. Which statement is correct?",
+      "options": ["Bandwidth and latency mean the same thing", "Bandwidth = how much data per second; latency = how long a single message takes to arrive", "Bandwidth is faster than latency", "Latency only matters for video"],
+      "answer": 1,
+      "explanation": "A fat pipe with long delay (satellite) has high bandwidth but high latency. A thin pipe with short delay (local Ethernet) is the reverse. Both matter — video calls need low latency; large downloads need high bandwidth."
+    },
+
+    {
+      "type": "multiple_choice", "topic": "media",
+      "question": "An image uses 24 bits per pixel (8 each for R, G, B). How many distinct colors can a single pixel represent?",
+      "options": ["24", "256", "About 16.7 million", "Unlimited"],
+      "answer": 2,
+      "explanation": "Each channel: 2^8 = 256 levels. Combined: 256 × 256 × 256 ≈ 16.7 million. Why 'True Color' is enough — the human eye can't distinguish more."
+    },
+    {
+      "type": "multiple_choice", "topic": "media",
+      "question": "Sound is digitized by SAMPLING the wave many times per second. What's the consequence of a LOWER sampling rate?",
+      "options": ["Better audio fidelity", "Smaller file size, but the recording loses high-frequency detail and sounds 'muffled' or distorted", "Louder playback", "Slower playback"],
+      "answer": 1,
+      "explanation": "Fewer samples per second → coarser digital approximation of the wave. CDs sample at 44,100 Hz; phone audio is often 8,000 Hz — fine for voice, terrible for music."
+    },
+    {
+      "type": "multiple_choice", "topic": "media",
+      "question": "Which scenario is BEST suited to LOSSY compression?",
+      "options": ["Storing legal contracts", "Streaming a movie — small differences in pixels and audio go unnoticed but bandwidth is saved enormously", "Compressing source code", "Storing medical X-rays for diagnosis"],
+      "answer": 1,
+      "explanation": "Lossy compression discards detail humans don't perceive. Perfect for movies, music, JPEGs. Bad for contracts, code, or medical images where every byte matters."
+    },
+    {
+      "type": "multiple_choice", "topic": "media",
+      "question": "What's the fundamental difference between analog and digital signals?",
+      "options": ["Analog signals are continuous over time and value; digital signals are discrete, represented as samples or bits", "Analog signals are always louder", "Digital signals can't be copied", "Analog only works with sound"],
+      "answer": 0,
+      "explanation": "Vinyl (analog) = continuous groove. CD (digital) = numbered samples. Digital can be copied perfectly and processed by computers; analog degrades each generation."
+    },
+    {
+      "type": "multiple_choice", "topic": "media",
+      "question": "An uncompressed image is 100 × 100 pixels at 24 bits per pixel. About how many bytes is the raw image?",
+      "options": ["100 bytes", "About 1,200 bytes", "About 30,000 bytes", "About 1,200,000 bytes"],
+      "answer": 2,
+      "explanation": "100 × 100 = 10,000 pixels. 24 bits × 10,000 = 240,000 bits. 240,000 ÷ 8 = 30,000 bytes (~30 KB). This is why compression matters — uncompressed photos balloon fast."
+    },
+
+    {
+      "type": "multiple_choice", "topic": "security",
+      "question": "What's the key difference between symmetric and asymmetric (public-key) encryption?",
+      "options": ["Symmetric is more secure than asymmetric", "Symmetric uses ONE shared key; asymmetric uses a PAIR of keys (public to encrypt, private to decrypt)", "Asymmetric only works for short messages", "There is no difference"],
+      "answer": 1,
+      "explanation": "Symmetric (AES) is fast but requires both parties to share a secret. Asymmetric (RSA) lets strangers communicate securely — publish the public key, keep the private one. HTTPS uses both."
+    },
+    {
+      "type": "multiple_choice", "topic": "security",
+      "question": "In public-key encryption, which key is used to ENCRYPT a message you want only Alice to read?",
+      "options": ["Alice's PRIVATE key", "Alice's PUBLIC key", "Your PRIVATE key", "A shared random key"],
+      "answer": 1,
+      "explanation": "Encrypt with Alice's PUBLIC key (anyone has it). Only her matching PRIVATE key can decrypt. That's the asymmetry — it travels one direction safely."
+    },
+    {
+      "type": "multiple_choice", "topic": "security",
+      "question": "A 'phishing' attack typically works by:",
+      "options": ["Brute-forcing passwords", "Tricking the user into revealing credentials via a fake login page or urgent-looking message", "Exploiting a software bug in the browser", "Overloading a server"],
+      "answer": 1,
+      "explanation": "Phishing exploits the HUMAN, not the software. The fake 'Your account is locked, click here' email is the classic. No firewall stops a user from typing their password into the wrong site."
+    },
+    {
+      "type": "multiple_choice", "topic": "security",
+      "question": "When you submit a form over HTTPS, who is BLOCKED from reading your input?",
+      "options": ["Only the website's server", "Intermediate parties (Wi-Fi snoopers, ISPs, routers) — but the website's server still sees the plain data on arrival", "Nobody — HTTPS is just for show", "The browser, but not the server"],
+      "answer": 1,
+      "explanation": "HTTPS encrypts data in transit, so people between you and the server can't read it. But the server decrypts on arrival — it has to, to use the data. HTTPS ≠ 'nobody sees this'."
+    },
+    {
+      "type": "multiple_choice", "topic": "security",
+      "question": "Which password is the STRONGEST against modern cracking attacks?",
+      "options": ["P@ssw0rd!", "MyDog2018", "correct horse battery staple", "12345abcde"],
+      "answer": 2,
+      "explanation": "Length beats complexity. A four-word random passphrase has more entropy than 'P@ssw0rd!' (which is in every cracker's dictionary). Humans remember length better than randomness."
+    },
+
+    {
+      "type": "multiple_choice", "topic": "impact",
+      "question": "Why does adding ALT TEXT to every image on a website matter?",
+      "options": ["Alt text is required by AP CSP rules", "Screen readers read alt text aloud, making the site usable for blind and low-vision users — and it also helps when images fail to load", "Alt text makes pages load faster", "It's only useful for search engine optimization"],
+      "answer": 1,
+      "explanation": "Accessibility is a CED-tested topic. Alt text is the canonical example: a single thoughtful design choice that makes the web usable for millions who'd otherwise be locked out."
+    },
+    {
+      "type": "multiple_choice", "topic": "impact",
+      "question": "A school district adopts an AI tool that automatically grades student essays. Which BEST captures the dual nature of computing innovations?",
+      "options": ["It will only have beneficial effects", "It saves teachers time, but may grade essays from non-native English speakers unfairly or miss creative writing styles outside its training data", "It will only have harmful effects", "It has no effects worth considering"],
+      "answer": 1,
+      "explanation": "AP CSP explicitly tests recognizing BOTH benefits and harms of computing. Most innovations are dual-edged — the right answer almost always acknowledges trade-offs, not absolutes."
+    },
+    {
+      "type": "multiple_choice", "topic": "impact",
+      "question": "Which scenario is MOST clearly a copyright violation?",
+      "options": ["Quoting a paragraph from a book in a school essay with citation", "Uploading a full movie to YouTube without the studio's permission", "Writing original code that solves the same problem as a popular open-source library", "Sharing a public-domain photograph"],
+      "answer": 1,
+      "explanation": "Full copyrighted work uploaded without permission = clear violation. Citing a quote is fair use. Independently writing similar code isn't copying. Public domain has no protection to violate."
+    },
+    {
+      "type": "multiple_choice", "topic": "impact",
+      "question": "Self-checkout kiosks at grocery stores illustrate which TWO simultaneous effects of computing innovations?",
+      "options": ["Lower checkout costs for the store AND reduced demand for cashier jobs", "Faster shopping ONLY", "Lower prices for customers ONLY", "No measurable effects"],
+      "answer": 0,
+      "explanation": "The AP exam frames innovations as having combined effects — economic, social, employment. Self-checkout is the textbook example: efficiency for stores, job displacement for workers."
+    },
+    {
+      "type": "multiple_choice", "topic": "impact",
+      "question": "Algorithms now influence decisions in lending, hiring, parole, and insurance. What is the BIGGEST societal concern?",
+      "options": ["Algorithms run too quickly", "When training data reflects past human bias, the algorithm can perpetuate or amplify that bias — at scale, behind a veneer of 'neutral math'", "Algorithms always demand more electricity", "Algorithms cannot make decisions"],
+      "answer": 1,
+      "explanation": "The harm isn't that computers decide — it's that biased decisions get made faster, with less accountability, and assumed objective. AP CSP tests this concern directly under 'Bias in computing'."
     }
   ]
 }
