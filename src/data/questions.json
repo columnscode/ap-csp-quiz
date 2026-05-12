@@ -1677,6 +1677,224 @@
       "options": ["Speed up page loads", "Build a profile of your interests for targeted advertising", "Encrypt your data", "Block ads"],
       "answer": 1,
       "explanation": "Cross-site tracking links your activity into an ad profile. Modern Safari and Firefox block these cookies by default; Chrome is gradually doing the same."
+    },
+
+    { "_section": "Databases, cleaning, and bias" },
+
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "A delivery company's database stores: TruckID, weight (lbs), entry_time, exit_time. Which question CANNOT be answered using only this data?",
+      "options": ["How many trucks entered before noon?", "What was the average truck weight today?", "How many deliveries did each truck make?", "How long was each truck on-site?"],
+      "answer": 2,
+      "explanation": "The schema records weight and timestamps, but never the count of deliveries per truck. Trips ≠ deliveries — a truck could enter once and deliver to 20 customers, or enter five times with zero deliveries."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "A library tracks every book checkout: BookID, MemberID, checkout_date, return_date. Which question CANNOT be answered?",
+      "options": ["Which book is checked out most often?", "Did the member enjoy reading the book?", "Who has the most overdue returns?", "What month has the highest checkout volume?"],
+      "answer": 1,
+      "explanation": "Enjoyment isn't a field. The database knows what was borrowed and when — but not how the reader felt. Inferring 'enjoyment' from checkout duration would be a guess, not data."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "A hospital records each visit as: PatientID, arrival_time, department, diagnosis_code. Which question CAN be answered directly?",
+      "options": ["How long did each patient wait before being seen?", "Which department had the most visits last month?", "How much did each visit cost?", "How satisfied was each patient?"],
+      "answer": 1,
+      "explanation": "Visits grouped by department and filtered by month is a straightforward filter+count. Wait times need a 'first-seen' timestamp, cost needs a billing field, satisfaction needs a survey — none are present."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "A school's attendance database stores: StudentID, date, period, status (present/absent/tardy). Which question requires data NOT in this database?",
+      "options": ["How many tardies did student #1042 get this semester?", "Why was each student absent?", "Which period has the most absences across the school?", "How many students were present on March 12?"],
+      "answer": 1,
+      "explanation": "'Status' tells you IF a student was absent, not WHY. Reasons (illness, family, skipping) would need to be a separate column. Classic exam trap — students assume rich data is there when only the labels are stored."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "An online store logs each order: OrderID, CustomerID, item, quantity, price, timestamp. Which question CANNOT be answered without additional data?",
+      "options": ["What was total revenue last week?", "Which item sells the most units?", "Which customers are repeat buyers?", "Where are most customers located?"],
+      "answer": 3,
+      "explanation": "No location field exists. Revenue (price × qty), top sellers (group by item), and repeat buyers (count by CustomerID) all use fields that ARE in the schema. Location would need a separate customer table or shipping records."
+    },
+
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "A survey dataset accidentally contains 30 duplicate responses. If you compute the average satisfaction WITHOUT removing them, what happens?",
+      "options": ["The average is unaffected because duplicates have the same value", "The average is biased toward the duplicated respondents' opinions", "The average becomes mathematically impossible to compute", "Duplicates always cancel each other out"],
+      "answer": 1,
+      "explanation": "Counting the same person multiple times overweights their answer. If 30 duplicates were all very happy customers, average satisfaction will look higher than it really is. Cleaning means de-duplicating BEFORE aggregating."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "A spreadsheet of monthly rainfall has several blank cells where the sensor failed. A student computes the mean by SUM ÷ count_of_non_blank_cells. What's the risk?",
+      "options": ["No risk — skipping blanks is always correct", "The result mis-represents reality if the missing months were systematically rainier or drier", "Blank cells will be counted as zero automatically", "The mean will always be too high"],
+      "answer": 1,
+      "explanation": "If the sensor failed mostly during storms, the surviving data is biased toward dry months. The 'missingness' itself isn't random. Knowing WHY data is missing is often more important than the cleaning method."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "A column meant to hold ages contains values: 17, 18, '19', 20, 'twenty', 22. What's the MOST likely cause?",
+      "options": ["A virus altered the data", "Inconsistent input — strings mixed with numbers, no validation at entry", "The database is encrypted", "Ages above 19 are stored as words"],
+      "answer": 1,
+      "explanation": "Type errors come from forms without input validation. Cleaning means converting '19' → 19 and either fixing or dropping 'twenty'. Real analyses crash on rows like this until cleaning is done."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "A 'state' column contains: 'NY', 'New York', 'new york', 'N.Y.', 'NewYork'. A student counts rows where state = 'NY' to find New York entries. What goes wrong?",
+      "options": ["Nothing — the database matches all five automatically", "Only the exact match 'NY' is counted; the other four variants are missed", "All five are double-counted", "The count is randomized"],
+      "answer": 1,
+      "explanation": "String matches are literal. Cleaning means standardizing formats — pick one representation ('NY') and convert all variants to it before counting."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "A retail dataset has a row where 'price' = 9999999. The next-highest price is $300. Which is the BEST first response?",
+      "options": ["Delete the row immediately and don't tell anyone", "Include it — all data is sacred", "Investigate whether it's a placeholder, typo, or legitimate outlier before deciding", "Replace it with the average price"],
+      "answer": 2,
+      "explanation": "9999999 is often a placeholder for 'unknown'. Or a typo (9.99 → 9999999). Or rarely a real luxury item. Cleaning decisions need context, not reflexes. Document whatever you decide."
+    },
+
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "Given a table of customer orders, you want a list of customers who spent more than $500 TOTAL. Which sequence of operations is correct?",
+      "options": ["Sort by name, then filter by total", "Group by customer → sum spending → filter where sum > 500", "Filter where price > 500 first, then group", "Just look at the highest single order"],
+      "answer": 1,
+      "explanation": "You need TOTAL spending per customer, so aggregate first (sum per customer), THEN apply the threshold filter. Filtering individual rows by price > 500 misses customers with many smaller orders that add up."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "A dataset has 50,000 song-play records. To answer 'which song is most popular?', what transformation is needed?",
+      "options": ["Filter for popular songs only", "Group by SongID and count plays; sort descending; take the top row", "Compute the average of all play counts", "Sort the raw records alphabetically by song name"],
+      "answer": 1,
+      "explanation": "Raw records don't tell you popularity directly — you have to aggregate. Group → count → sort → top is the standard pipeline for 'what's the most X' questions."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "A weather dataset has daily high temperatures for 10 years. To produce 'average high temperature by month', you need to:",
+      "options": ["Average every single value in the dataset", "Group rows by their MONTH (ignoring year), then average within each group", "Pick one year and report its monthly averages", "Sort rows by date"],
+      "answer": 1,
+      "explanation": "'By month' means the group key is the month. All 10 Januarys collapse into one bucket; same for February, etc. The transformation reduces ~3,650 rows to 12."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "Why do filtering and transforming data turn DATA into INFORMATION?",
+      "options": ["Filtering changes the underlying database", "Aggregating raw rows reveals patterns and answers questions a human cares about", "Information is whatever data is left over after filtering", "Transformations are required by law"],
+      "answer": 1,
+      "explanation": "Raw data ('30 million temperature readings') is hard to act on. Information ('July is warmer than January in NYC') is what humans can decide with. The transformation IS the act of creating meaning."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "A student wants to know how many female students scored above 90 on the final. The table has columns: StudentID, name, gender, score. Best plan?",
+      "options": ["Sort by score, then count manually", "Filter gender = 'F' AND score > 90, then count rows", "Group by gender then average the scores", "Aggregate first, filter never"],
+      "answer": 1,
+      "explanation": "Two-condition filter, then count. A single combined filter is simpler than filtering twice. This is the pattern behind every 'how many X with property Y' database question on the exam."
+    },
+
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "What is metadata?",
+      "options": ["A backup copy of the data", "Data ABOUT data — describing its origin, format, size, time created, etc.", "Encrypted version of the data", "The most important data in a dataset"],
+      "answer": 1,
+      "explanation": "Metadata describes the data without being the data itself. A photo's pixels are the data; the camera model, GPS, and timestamp embedded in the file are metadata."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "When you take a photo on your phone, what metadata is typically stored INSIDE the image file?",
+      "options": ["Only the pixels", "Camera model, exposure settings, timestamp, and often GPS location", "The names of every person in the photo", "Your phone's password"],
+      "answer": 1,
+      "explanation": "EXIF metadata travels with the photo. That's why sharing an unmodified photo can reveal where and when you were — a real privacy concern. Many social platforms strip EXIF on upload, but not all."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "Why can email metadata (sender, recipient, time, subject) sometimes reveal MORE than the email's content?",
+      "options": ["Metadata is always written in all caps", "Patterns of who-talks-to-whom-when expose relationships, schedules, and networks without needing the message text", "Metadata is plain text and content is encrypted", "Metadata files are larger than message files"],
+      "answer": 1,
+      "explanation": "You don't need to read messages to learn that someone calls their doctor weekly at 9 PM, or that two executives email moments before a stock trade. This is why metadata collection is a major privacy debate."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "Which of these is metadata for a music file (.mp3), NOT the data itself?",
+      "options": ["The waveform samples that produce sound", "Artist name, album, track length, bitrate, year released", "The volume the song plays at", "The speakers the user listens with"],
+      "answer": 1,
+      "explanation": "Audio samples = the data (what you hear). ID3 tags = metadata (artist, album, length). Music apps sort and search using metadata; you couldn't browse by 'artist' without it."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "Why do search engines, recommendation systems, and digital libraries depend on metadata?",
+      "options": ["Metadata is always more accurate than the content", "Searching, filtering, and grouping over millions of files is fast on small tagged fields but slow on full content", "Metadata is required by federal law", "Without metadata, files can't be opened"],
+      "answer": 1,
+      "explanation": "Indexing 'artist = Beyoncé' across a million songs is fast. Re-analyzing audio waveforms of every song would be enormously slower. Good metadata makes large-scale search practical."
+    },
+
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "A startup builds a music recommendation algorithm using only data from its current users — mostly college students aged 18–22. What's the risk when the app launches to a broader audience?",
+      "options": ["The algorithm will work perfectly for everyone", "Recommendations will be biased toward what 18–22-year-olds like, performing poorly for older users whose tastes weren't represented", "The algorithm will run faster", "Older users will get college-student discounts automatically"],
+      "answer": 1,
+      "explanation": "If the training data only represents one demographic, the model learns THAT demographic's patterns. This is the canonical 'unrepresentative training data' bias the AP exam loves to ask about."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "A city posts a public survey link on its website asking 'How satisfied are you with city services?'. Why might the results be biased?",
+      "options": ["Online surveys are illegal", "People without reliable internet — often older, lower-income, or rural — are systematically underrepresented", "Surveys can't measure satisfaction", "Websites can't collect numeric answers"],
+      "answer": 1,
+      "explanation": "The digital divide creates sampling bias. Whoever isn't online can't be heard. Cities that rely only on online surveys miss the residents most likely to struggle with services in the first place."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "A hiring algorithm is trained on 10 years of past hiring decisions at a company. The company historically hired few women into engineering roles. What does the algorithm likely learn?",
+      "options": ["It learns to be perfectly fair because data is neutral", "It learns to replicate the historical pattern, ranking women lower even if their qualifications are equal", "It refuses to make decisions", "It learns nothing because hiring data is too small"],
+      "answer": 1,
+      "explanation": "Models learn from whatever patterns the data shows — including discriminatory ones. 'Garbage in, garbage out' applies to bias too. Amazon famously shelved a recruiting tool for exactly this reason."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "A medical study collects symptom data only from patients who visit a clinic. Why is the resulting dataset NOT representative of the general population's health?",
+      "options": ["Clinics only see healthy people", "People who can't afford care, live far from clinics, or distrust doctors are missing — yet they're part of 'the population'", "Clinic data is always exaggerated", "Doctors invent symptoms"],
+      "answer": 1,
+      "explanation": "This is selection bias. The dataset only captures people who chose AND were able to seek care. Conclusions drawn ('symptom X is rare') may be wildly wrong for the larger uncared-for population."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "What's the SAFEST conclusion a researcher can draw when key demographic groups are MISSING from a dataset?",
+      "options": ["Whatever the data shows applies to everyone", "Conclusions are valid only for the groups actually represented; extrapolating beyond them is unsupported", "Missing groups should be assumed to behave the same as represented groups", "Missing data should be filled in with random values"],
+      "answer": 1,
+      "explanation": "You can only generalize to whoever was actually sampled. Pretending missing groups are 'just like' the included ones is the assumption that creates real-world harm — from medical dosing to facial recognition failures."
+    },
+
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "What is a computer simulation?",
+      "options": ["A photograph of a real-world event", "A program that models a real-world or hypothetical system using simplifying rules and assumptions", "An exact perfect copy of reality", "A backup of a database"],
+      "answer": 1,
+      "explanation": "Simulations represent systems abstractly — flight simulators, disease-spread models, climate models, traffic models. They make assumptions because reality is too detailed to copy exactly."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "Why might scientists use a simulation INSTEAD of a real-world experiment?",
+      "options": ["Simulations are always more accurate than experiments", "Real experiments may be too dangerous, expensive, slow, or impossible to repeat at scale", "Simulations don't require any thinking", "Real-world experiments are illegal"],
+      "answer": 1,
+      "explanation": "You can't crash 1,000 cars to test bumpers, or speed up climate, or rerun a pandemic. Simulations let you explore 'what-ifs' safely and cheaply. The trade-off is that they're only as good as the model."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "A traffic simulation assumes every driver follows the speed limit exactly. The simulation predicts no accidents. Why is this prediction unreliable?",
+      "options": ["Simulations can never predict accidents", "The simplifying assumption (perfect drivers) doesn't match reality, so any conclusion built on it is suspect", "Traffic data is encrypted", "Computers can't simulate driving"],
+      "answer": 1,
+      "explanation": "Every simulation makes simplifying assumptions. The validity of its predictions depends on whether those assumptions hold. 'Perfect drivers' obviously doesn't — so 'no accidents' tells you about the model, not the road."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "Which of these is a key LIMITATION of every simulation?",
+      "options": ["Simulations can never produce numbers", "A simulation can only be as accurate as the model it's built from — missing factors lead to wrong predictions", "Simulations must always run faster than real time", "Simulations require quantum computers"],
+      "answer": 1,
+      "explanation": "Models omit detail by design. A weather simulation that ignores cloud cover will mispredict temperature. AP exam questions love asking 'what couldn't this simulation tell us?' — the answer is usually whatever the model leaves out."
+    },
+    {
+      "type": "multiple_choice", "topic": "data",
+      "question": "Why do many simulations (disease spread, weather, gambling) use RANDOM number generators?",
+      "options": ["To make results harder to verify", "Real-world systems involve chance; running the simulation many times with random inputs explores the range of possible outcomes", "Random numbers are required by AP exam rules", "Without randomness, the program crashes"],
+      "answer": 1,
+      "explanation": "A single simulation run with fixed inputs gives one answer. Repeated runs with random variation (Monte Carlo methods) reveal the distribution — 'in 80% of runs, the disease dies out by week 8' is more useful than one trajectory."
     }
   ]
 }
